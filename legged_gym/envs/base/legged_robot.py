@@ -119,14 +119,7 @@ class LeggedRobot(BaseTask):
     def check_termination(self):
         """ Check if environments need to be reset
         """
-        self.reset_buf = torch.any(
-            torch.norm(
-                self.link_contact_forces[:, self.termination_contact_link_indices, :],
-                dim=-1,
-            )
-            > 1.0,
-            dim=1,
-        )
+        self.reset_buf = torch.any(torch.norm(self.link_contact_forces[:, self.termination_indices, :], dim=-1)> 1.0, dim=1)
         self.time_out_buf = self.episode_length_buf > self.max_episode_length # no terminal reward for time-outs
         self.reset_buf |= self.time_out_buf
         self.reset_buf |= torch.logical_or(
@@ -247,15 +240,20 @@ class LeggedRobot(BaseTask):
                 camera_lookat=(0.0, 0.0, 0.5),
                 camera_fov=40,
             ),
-            vis_options=gs.options.VisOptions(n_rendered_envs=1),
+            vis_options=gs.options.VisOptions(n_rendered_envs=self.cfg.viewer.num_rendered_envs),
             rigid_options=gs.options.RigidOptions(
                 dt=self.sim_dt,
                 constraint_solver=gs.constraint_solver.Newton,
                 enable_collision=True,
                 enable_joint_limit=True,
+                enable_self_collision=self.cfg.asset.self_collisions,
             ),
             show_viewer= not self.headless,
         )
+        # add camera if needed
+        if self.cfg.viewer.add_camera:
+            self._setup_camera()
+        
         # add terrain
         mesh_type = self.cfg.terrain.mesh_type # only plane for now
         # if mesh_type in ['heightfield', 'trimesh']:
@@ -269,46 +267,29 @@ class LeggedRobot(BaseTask):
         elif mesh_type is not None:
             raise ValueError("Terrain mesh type not recognised. Allowed types are [None, plane, heightfield, trimesh]")
         self._create_envs()
-        
-
-    def _set_camera(self):
+    
+    def set_camera(self, pos, lookat):
+        """ Set camera position and direction
+        """
+        self.floating_camera.set_pose(
+            pos=pos,
+            lookat=lookat
+        )
+    
+    #------------- Callbacks --------------
+    def _setup_camera(self):
         ''' Set camera position and direction
         '''
-        self._floating_camera = self.scene.add_camera(
+        self.floating_camera = self.scene.add_camera(
+            res = (1280, 960),
             pos=np.array(self.cfg.viewer.pos),
             lookat=np.array(self.cfg.viewer.lookat),
             fov=40,
-            GUI=False,
+            GUI=True,
         )
 
         self._recording = False
         self._recorded_frames = []
-
-    #------------- Callbacks --------------
-    # def _process_rigid_shape_props(self, props, env_id):
-    #     """ Callback allowing to store/change/randomize the rigid shape properties of each environment.
-    #         Called During environment creation.
-    #         Base behavior: randomizes the friction of each environment
-
-    #     Args:
-    #         props (List[gymapi.RigidShapeProperties]): Properties of each shape of the asset
-    #         env_id (int): Environment id
-
-    #     Returns:
-    #         [List[gymapi.RigidShapeProperties]]: Modified rigid shape properties
-    #     """
-    #     if self.cfg.domain_rand.randomize_friction:
-    #         if env_id==0:
-    #             # prepare friction randomization
-    #             friction_range = self.cfg.domain_rand.friction_range
-    #             num_buckets = 64
-    #             bucket_ids = torch.randint(0, num_buckets, (self.num_envs, 1))
-    #             friction_buckets = torch_rand_float(friction_range[0], friction_range[1], (num_buckets,1), device='cpu')
-    #             self.friction_coeffs = friction_buckets[bucket_ids]
-
-    #         for s in range(len(props)):
-    #             props[s].friction = self.friction_coeffs[env_id]
-    #     return props
     
     def _post_physics_step_callback(self):
         """ Callback called before computing terminations, rewards, and observations
@@ -534,16 +515,8 @@ class LeggedRobot(BaseTask):
         self.last_dof_vel = torch.zeros_like(self.actions)
         self.base_pos = torch.zeros((self.num_envs, 3), device=self.device, dtype=gs.tc_float)
         self.base_quat = torch.zeros((self.num_envs, 4), device=self.device, dtype=gs.tc_float)
-        self.feet_air_time = torch.zeros(
-            (self.num_envs, len(self.feet_link_indices)),
-            device=self.device,
-            dtype=gs.tc_float,
-        )
-        self.last_contacts = torch.zeros(
-            (self.num_envs, len(self.feet_link_indices)),
-            device=self.device,
-            dtype=gs.tc_int,
-        )
+        self.feet_air_time = torch.zeros((self.num_envs, len(self.feet_indices)), device=self.device, dtype=gs.tc_float)
+        self.last_contacts = torch.zeros((self.num_envs, len(self.feet_indices)), device=self.device,dtype=gs.tc_int)
         self.link_contact_forces = torch.zeros(
             (self.num_envs, self.robot.n_links, 3), device=self.device, dtype=gs.tc_float
         )
@@ -685,17 +658,15 @@ class LeggedRobot(BaseTask):
                 if flag:
                     link_indices.append(link.idx - self.robot.link_start)
             return link_indices
-        self.termination_contact_link_indices = find_link_indices(self.cfg.asset.terminate_after_contacts_on)
-        self.penalized_contact_link_indices = find_link_indices(self.cfg.asset.penalize_contacts_on)
-        self.feet_link_indices = find_link_indices(self.cfg.asset.foot_name)
-        assert len(self.termination_contact_link_indices) > 0
-        assert len(self.penalized_contact_link_indices) > 0
-        assert len(self.feet_link_indices) > 0
-        self.feet_link_indices_world_frame = [i+1 for i in self.feet_link_indices]
+        self.termination_indices = find_link_indices(self.cfg.asset.terminate_after_contacts_on)
+        self.penalized_indices = find_link_indices(self.cfg.asset.penalize_contacts_on)
+        self.feet_indices = find_link_indices(self.cfg.asset.foot_name)
+        assert len(self.termination_indices) > 0
+        assert len(self.penalized_indices) > 0
+        assert len(self.feet_indices) > 0
+        self.feet_link_indices_world_frame = [i+1 for i in self.feet_indices]
         
-        
-        
-        # 
+        # dof position limits
         self.dof_pos_limits = torch.stack(self.robot.get_dofs_limit(self.motor_dofs), dim=1)
         self.torque_limits = self.robot.get_dofs_force_range(self.motor_dofs)[1]
         for i in range(self.dof_pos_limits.shape[0]):
@@ -871,7 +842,7 @@ class LeggedRobot(BaseTask):
     
     def _reward_collision(self):
         # Penalize collisions on selected bodies
-        return torch.sum(1.*(torch.norm(self.link_contact_forces[:, self.penalized_contact_link_indices, :], dim=-1) > 0.1), dim=1)
+        return torch.sum(1.*(torch.norm(self.link_contact_forces[:, self.penalized_indices, :], dim=-1) > 0.1), dim=1)
     
     def _reward_termination(self):
         # Terminal reward / penalty
@@ -904,7 +875,7 @@ class LeggedRobot(BaseTask):
 
     def _reward_feet_air_time(self):
         # Reward long steps
-        contact = self.link_contact_forces[:, self.feet_link_indices, 2] > 1.
+        contact = self.link_contact_forces[:, self.feet_indices, 2] > 1.
         contact_filt = torch.logical_or(contact, self.last_contacts) 
         self.last_contacts = contact
         first_contact = (self.feet_air_time > 0.) * contact_filt

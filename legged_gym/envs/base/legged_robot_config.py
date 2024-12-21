@@ -78,8 +78,8 @@ class LeggedRobotCfg(BaseConfig):
         penalize_contacts_on = []
         terminate_after_contacts_on = []
         disable_gravity = False
-        collapse_fixed_joints = True # merge bodies connected by fixed joints. Specific fixed joints can be kept by adding " <... dont_collapse="true">
-
+        self_collisions = True   # enable self collisions
+        
     class domain_rand:
         randomize_friction = True
         friction_range = [0.5, 1.25]
@@ -140,8 +140,10 @@ class LeggedRobotCfg(BaseConfig):
     # viewer camera:
     class viewer:
         ref_env = 0
-        pos = [10, 0, 6]  # [m]
+        pos = [10, 0, 6]       # [m]
         lookat = [11., 5, 3.]  # [m]
+        num_rendered_envs = 1  # number of environments to be rendered
+        add_camera = False
 
     class sim:
         use_implicit_controller = False

@@ -17,6 +17,7 @@ def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 1)
+    env_cfg.viewer.add_camera = True  # use a extra camera for moving
     env_cfg.terrain.num_rows = 1
     env_cfg.terrain.num_cols = 1
     env_cfg.terrain.curriculum = False
@@ -43,23 +44,31 @@ def play(args):
     joint_index = 1 # which joint is used for logging
     stop_state_log = 100 # number of steps before plotting states
     stop_rew_log = env.max_episode_length + 1 # number of steps before print average episode rewards
+    
+    # for MOVE_CAMERA
     camera_position = np.array(env_cfg.viewer.pos, dtype=np.float64)
     camera_vel = np.array([1., 1., 0.])
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
-    img_idx = 0
+    # for FOLLOW_ROBOT
+    camera_lookat_follow = np.array(env_cfg.viewer.lookat)
+    camera_deviation_follow = np.array([2., 2., 0.])
+    camera_position_follow = camera_lookat_follow - camera_deviation_follow
 
     for i in range(10*int(env.max_episode_length)):
         actions = policy(obs.detach())
         obs, _, rews, dones, infos = env.step(actions.detach())
-        if RECORD_FRAMES:
-            if i % 2:
-                filename = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name, 'exported', 'frames', f"{img_idx}.png")
-                env.gym.write_viewer_image_to_file(env.viewer, filename)
-                img_idx += 1 
         if MOVE_CAMERA:
             camera_position += camera_vel * env.dt
             env.set_camera(camera_position, camera_position + camera_direction)
-
+            env.floating_camera.render()
+        if FOLLOW_ROBOT:
+            # refresh where camera looks at(robot 0 base)
+            camera_lookat_follow = env.base_pos[robot_index, :].cpu().numpy()
+            # refresh camera's position
+            camera_position_follow = camera_lookat_follow - camera_deviation_follow
+            env.set_camera(camera_position_follow, camera_lookat_follow)
+            env.floating_camera.render()
+        
         if i < stop_state_log:
             logger.log_states(
                 {
@@ -74,7 +83,7 @@ def play(args):
                     'base_vel_y': env.base_lin_vel[robot_index, 1].item(),
                     'base_vel_z': env.base_lin_vel[robot_index, 2].item(),
                     'base_vel_yaw': env.base_ang_vel[robot_index, 2].item(),
-                    'contact_forces_z': env.link_contact_forces[robot_index, env.feet_link_indices, 2].cpu().numpy()
+                    'contact_forces_z': env.link_contact_forces[robot_index, env.feet_indices, 2].cpu().numpy()
                 }
             )
         elif i==stop_state_log:
@@ -90,6 +99,8 @@ def play(args):
 if __name__ == '__main__':
     EXPORT_POLICY = True
     RECORD_FRAMES = False
-    MOVE_CAMERA = False
+    MOVE_CAMERA = True
+    FOLLOW_ROBOT = False
+    assert not (MOVE_CAMERA and FOLLOW_ROBOT), "Cannot move camera and follow robot at the same time"
     args = get_args()
     play(args)

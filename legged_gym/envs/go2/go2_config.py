@@ -3,7 +3,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 class GO2RoughCfg( LeggedRobotCfg ):
     
     class env( LeggedRobotCfg.env ):
-        num_envs = 4096
+        num_envs = 10000
         num_observations = 48
         
     class init_state( LeggedRobotCfg.init_state ):
@@ -70,7 +70,8 @@ class GO2RoughCfgPPO( LeggedRobotCfgPPO ):
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
         experiment_name = 'rough_go2'
-        load_run = "Dec21_14-02-19_"
+        load_run = "Dec21_15-29-22_"
         checkpoint = -1
+        max_iterations = 5000
 
   
