@@ -70,5 +70,7 @@ class GO2RoughCfgPPO( LeggedRobotCfgPPO ):
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
         experiment_name = 'rough_go2'
+        load_run = "Dec21_14-02-19_"
+        checkpoint = -1
 
   

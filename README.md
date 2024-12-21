@@ -3,7 +3,7 @@
 A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for training legged robots in [genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main)
 
 
-## Usage
+## Installation
 
 1. Create a new python virtual env with python>=3.9
 2. Install [PyTorch](https://pytorch.org/)
@@ -23,6 +23,9 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
    cd genesis_lr
    pip install -e .
    ```
+
+## Usage
+
 
 ## Features
 
@@ -59,4 +62,5 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 
 ## TODO
 
-- [] Add Heightfield support
+- [ ] Verify the trained model on real robots.
+- [ ] Add Heightfield support
