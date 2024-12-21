@@ -160,6 +160,8 @@ class LeggedRobot(BaseTask):
             self._randomize_friction(env_ids)
         if self.cfg.domain_rand.randomize_base_mass:
             self._randomize_base_mass(env_ids)
+        if self.cfg.domain_rand.randomize_com_displacement:
+            self._randomize_com_displacement(env_ids)
 
         # reset buffers
         self.last_actions[env_ids] = 0.
@@ -696,6 +698,9 @@ class LeggedRobot(BaseTask):
         # randomize base mass
         if self.cfg.domain_rand.randomize_base_mass:
             self._randomize_base_mass(np.arange(self.num_envs))
+        # randomize COM displacement
+        if self.cfg.domain_rand.randomize_com_displacement:
+            self._randomize_com_displacement(np.arange(self.num_envs))
     
     def _randomize_friction(self, env_ids=None):
         ''' Randomize friction of all links'''
@@ -708,6 +713,17 @@ class LeggedRobot(BaseTask):
         base_link_id = 1
         added_mass = gs.rand((self.num_envs, 1), dtype=float) * (max_mass - min_mass) + min_mass
         self.rigid_solver.set_links_mass_shift(added_mass, [base_link_id, ], env_ids)
+    
+    def _randomize_com_displacement(self, env_ids):
+
+        min_displacement, max_displacement = self.cfg.domain_rand.com_displacement_range
+        base_link_id = 1
+
+        com_displacement = gs.rand((len(env_ids), 1, 3), dtype=float) \
+                            * (max_displacement - min_displacement) + min_displacement
+        # com_displacement[:, :, 0] -= 0.02
+
+        self.rigid_solver.set_links_COM_shift(com_displacement, [base_link_id,], env_ids)
 
     def _parse_cfg(self, cfg):
         self.dt = self.cfg.control.dt

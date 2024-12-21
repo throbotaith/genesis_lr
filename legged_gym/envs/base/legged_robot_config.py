@@ -85,6 +85,8 @@ class LeggedRobotCfg(BaseConfig):
         push_robots = True
         push_interval_s = 15
         max_push_vel_xy = 1.
+        randomize_com_displacement = True
+        com_displacement_range = [-0.01, 0.01]
         simulate_action_latency = True # 1 step delay
 
     class rewards:
