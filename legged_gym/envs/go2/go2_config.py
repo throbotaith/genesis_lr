@@ -90,6 +90,8 @@ class GO2Cfg( LeggedRobotCfg ):
         push_interval_s = 15
         max_push_vel_xy = 1.
         simulate_action_latency = False # 1 step delay
+        randomize_com_displacement = True
+        com_displacement_range = [-0.01, 0.01]
 
 class GO2CfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):

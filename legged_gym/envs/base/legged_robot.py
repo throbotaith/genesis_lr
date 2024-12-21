@@ -668,8 +668,6 @@ class LeggedRobot(BaseTask):
                     link_indices.append(link.idx - self.robot.link_start)
             return link_indices
         self.all_link_indices = find_link_indices(self.cfg.asset.all_links)
-        # self.base_link_index = find_link_indices(["base"])
-        # print(f"base_link_index: {self.base_link_index}")
         self.termination_indices = find_link_indices(self.cfg.asset.terminate_after_contacts_on)
         self.penalized_indices = find_link_indices(self.cfg.asset.penalize_contacts_on)
         self.feet_indices = find_link_indices(self.cfg.asset.foot_name)
@@ -711,7 +709,7 @@ class LeggedRobot(BaseTask):
         ''' Randomize base mass'''
         min_mass, max_mass = self.cfg.domain_rand.added_mass_range
         base_link_id = 1
-        added_mass = gs.rand((self.num_envs, 1), dtype=float) * (max_mass - min_mass) + min_mass
+        added_mass = gs.rand((len(env_ids), 1), dtype=float) * (max_mass - min_mass) + min_mass
         self.rigid_solver.set_links_mass_shift(added_mass, [base_link_id, ], env_ids)
     
     def _randomize_com_displacement(self, env_ids):
