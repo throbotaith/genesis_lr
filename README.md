@@ -1,9 +1,9 @@
-# Legged Robotics in Genesis
+# 🦿 Legged Robotics in Genesis
 
 A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for training legged robots in [genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main)
 
 
-## Installation
+## 🛠 Installation
 
 1. Create a new python virtual env with python>=3.9
 2. Install [PyTorch](https://pytorch.org/)
@@ -24,10 +24,24 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
    pip install -e .
    ```
 
-## Usage
+## 👋 Usage
 
+### 🚀 Quick Start
 
-## Features
+By default, the task is set to `go2`(in `utils/helper.py`), we can run a training session with the following command:
+
+```bash
+cd legged_gym/scripts
+python train.py --headless # run training without rendering
+```
+
+After the training is done, paste the `run_name` under `logs/go2` to `load_run` in `go2_config.py`, which is determined by the time when the training starts.
+
+![]()
+
+Then, run `play.py` to visualize the trained model:
+
+## 🌟 Features
 
 - **Totally based on [legged_gym](https://github.com/leggedrobotics/legged_gym)**
   
@@ -51,7 +65,7 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
   - Graphics memory usage in isaac gym: 
   ![](./test/isaacgym_memory_usage.png)
 
-  With this smaller memory usage, it's possible to run more parallel environments, which can further improve the training speed.
+  With this smaller memory usage, it's possible to **run more parallel environments**, which can further improve the training speed.
 
 ## Acknowledgements
 
@@ -59,8 +73,10 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 - [Genesis-backflip](https://github.com/ziyanx02/Genesis-backflip)
 - [legged_gym](https://github.com/leggedrobotics/legged_gym)
 - [rsl_rl](https://github.com/leggedrobotics/rsl_rl)
+- [unitree_rl_gym](https://github.com/unitreerobotics/unitree_rl_gym)
 
 ## TODO
 
+- [ ] Add domain randomization
 - [ ] Verify the trained model on real robots.
 - [ ] Add Heightfield support

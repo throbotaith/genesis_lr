@@ -69,7 +69,7 @@ Stephen Brawner (brawner@gmail.com)
   </link>
   <joint
     name="Head_upper_joint"
-    type="fixed" dont_collapse="true">
+    type="fixed">
     <origin
       xyz="0.285 0 0.01"
       rpy="0 0 0" />

@@ -17,8 +17,7 @@ class LeggedRobotCfg(BaseConfig):
         vertical_scale = 0.005 # [m]
         border_size = 25 # [m]
         curriculum = False
-        static_friction = 1.0
-        dynamic_friction = 1.0
+        friction = 1.0
         restitution = 0.
         # rough terrain only:
         measure_heights = False
@@ -68,17 +67,15 @@ class LeggedRobotCfg(BaseConfig):
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
         
-
     class asset:
         dof_names = ["joint_a", "joint_b"]
         file = ""
-        name = "legged_robot"  # actor name
-        links_to_keep = [] # links that are not merged because of fixed joints
-        foot_name = "None" # name of the feet bodies, used to index body state and contact force tensors
+        links_to_keep = []     # links that are not merged because of fixed joints
+        foot_name = "None"     # name of the feet bodies, used to index body state and contact force tensors
         penalize_contacts_on = []
         terminate_after_contacts_on = []
-        disable_gravity = False
-        self_collisions = True   # enable self collisions
+        all_links = []
+        self_collisions = True   # enable self collisions by default
         
     class domain_rand:
         randomize_friction = True

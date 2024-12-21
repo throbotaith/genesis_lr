@@ -24,6 +24,12 @@ def play(args):
     env_cfg.noise.add_noise = False
     env_cfg.domain_rand.randomize_friction = False
     env_cfg.domain_rand.push_robots = False
+    env_cfg.domain_rand.randomize_base_mass = False
+    # velocity range
+    env_cfg.commands.ranges.lin_vel_x = [0.5, 0.5]
+    env_cfg.commands.ranges.lin_vel_y = [0., 0.]
+    env_cfg.commands.ranges.ang_vel_yaw = [0., 0.]
+    env_cfg.commands.ranges.heading = [0., 0.]
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
@@ -51,7 +57,7 @@ def play(args):
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
     # for FOLLOW_ROBOT
     camera_lookat_follow = np.array(env_cfg.viewer.lookat)
-    camera_deviation_follow = np.array([2., 2., 0.])
+    camera_deviation_follow = np.array([2., 2., 1.])
     camera_position_follow = camera_lookat_follow - camera_deviation_follow
 
     for i in range(10*int(env.max_episode_length)):
@@ -99,8 +105,8 @@ def play(args):
 if __name__ == '__main__':
     EXPORT_POLICY = True
     RECORD_FRAMES = False
-    MOVE_CAMERA = True
-    FOLLOW_ROBOT = False
+    MOVE_CAMERA   = False
+    FOLLOW_ROBOT  = False
     assert not (MOVE_CAMERA and FOLLOW_ROBOT), "Cannot move camera and follow robot at the same time"
     args = get_args()
     play(args)
