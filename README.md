@@ -32,13 +32,15 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 
 - Simulation
   
-  For a go2 walking on the plane task, training a policy with 10000 envs for 600 ites(which is 144M steps) takes about 12 mins. The play result is as below:
+  For a go2 walking on the plane task, training a policy with 10000 envs for 600 ites(which is 144M steps) takes about 12mins. The play result is as below:
   
   ![](./test/go2_flat_play.gif)
 
 - Real Robot
   
-  Coming soon
+  Also for a go2 walking on the plane task, training policy+explicit estimator with 10000 envs for 1k ites takes about 23mins. Deployment result is as below:
+
+  ![](./test/genesis_deploy_test.gif)
 
 ## 🛠 Installation
 
