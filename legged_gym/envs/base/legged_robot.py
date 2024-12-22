@@ -31,7 +31,7 @@ class LeggedRobot(BaseTask):
         """
         self.cfg = cfg
         self.height_samples = None
-        self.debug_viz = False
+        self.debug_viz = self.cfg.env.debug_viz
         self.init_done = False
         self._parse_cfg(self.cfg)
         super().__init__(self.cfg, sim_device, headless)
@@ -86,10 +86,8 @@ class LeggedRobot(BaseTask):
         self.base_quat[:] = self.robot.get_quat()
         base_quat_rel = gs_quat_mul(self.base_quat, gs_inv_quat(self.base_init_quat.reshape(1, -1).repeat(self.num_envs, 1)))
         self.base_euler = gs_quat2euler(base_quat_rel)
-        inv_quat_yaw = gs_quat_from_angle_axis(-self.base_euler[:, 2],
-                                               torch.tensor([0, 0, 1], device=self.device, dtype=torch.float))
         inv_base_quat = inv_quat(self.base_quat)
-        self.base_lin_vel[:] = transform_by_quat(self.robot.get_vel(), inv_quat_yaw)
+        self.base_lin_vel[:] = transform_by_quat(self.robot.get_vel(), inv_base_quat) # trasform to base frame
         self.base_ang_vel[:] = transform_by_quat(self.robot.get_ang(), inv_base_quat)
         self.projected_gravity = transform_by_quat(self.global_gravity, inv_base_quat)
         self.dof_pos[:] = self.robot.get_dofs_position(self.motor_dofs)
@@ -113,8 +111,8 @@ class LeggedRobot(BaseTask):
         self.last_actions[:] = self.actions[:]
         self.last_dof_vel[:] = self.dof_vel[:]
 
-        # if self.viewer and self.enable_viewer_sync and self.debug_viz:
-        #     self._draw_debug_vis()
+        if self.debug_viz:
+            self._draw_debug_vis()
 
     def check_termination(self):
         """ Check if environments need to be reset
@@ -122,13 +120,6 @@ class LeggedRobot(BaseTask):
         self.reset_buf = torch.any(torch.norm(self.link_contact_forces[:, self.termination_indices, :], dim=-1)> 1.0, dim=1)
         self.time_out_buf = self.episode_length_buf > self.max_episode_length # no terminal reward for time-outs
         self.reset_buf |= self.time_out_buf
-        self.reset_buf |= torch.logical_or(
-            torch.abs(self.base_euler[:, 1])
-            > self.cfg.rewards.termination_if_pitch_greater_than,
-            torch.abs(self.base_euler[:, 0])
-            > self.cfg.rewards.termination_if_roll_greater_than,
-        )
-        self.reset_buf |= self.base_pos[:, 2] < self.cfg.rewards.termination_if_height_lower_than
         
     def reset_idx(self, env_ids):
         """ Reset some environments.
@@ -193,6 +184,8 @@ class LeggedRobot(BaseTask):
             rew = self.reward_functions[i]() * self.reward_scales[name]
             self.rew_buf += rew
             self.episode_sums[name] += rew
+        if self.cfg.rewards.only_positive_rewards:
+            self.rew_buf[:] = torch.clip(self.rew_buf[:], min=0.)
         # add termination reward after clipping
         if "termination" in self.reward_scales:
             rew = self._reward_termination() * self.reward_scales["termination"]
@@ -316,9 +309,7 @@ class LeggedRobot(BaseTask):
         if self.cfg.commands.heading_command:
             forward = gs_transform_by_quat(self.forward_vec, self.base_quat)
             heading = torch.atan2(forward[:, 1], forward[:, 0])
-            self.commands[:, 2] = torch.clip(
-                0.5 * wrap_to_pi(self.commands[:, 3] - heading), -1.0, 1.0
-        )
+            self.commands[:, 2] = torch.clip(0.5 * wrap_to_pi(self.commands[:, 3] - heading), -1.0, 1.0)
 
         if self.cfg.terrain.measure_heights:
             self.measured_heights = self._get_heights()
@@ -362,9 +353,13 @@ class LeggedRobot(BaseTask):
         Args:
             env_ids (List[int]): Environemnt ids
         """
-        self.dof_pos[envs_idx] = (
-            self.default_dof_pos
-        )  + gs_rand_float(-0.3, 0.3, (len(envs_idx), self.num_actions), self.device)
+        
+        dof_pos = torch.zeros((len(envs_idx), self.num_actions), dtype=gs.tc_float, device=self.device)
+        dof_pos[:, [0, 3, 6, 9]] = self.default_dof_pos[[0, 3, 6, 9]] + gs_rand_float(-0.2, 0.2, (len(envs_idx), 4), self.device)
+        dof_pos[:, [1, 4, 7, 10]] = self.default_dof_pos[[0, 1, 4, 7]] + gs_rand_float(-0.4, 0.4, (len(envs_idx), 4), self.device)
+        dof_pos[:, [2, 5, 8, 11]] = self.default_dof_pos[[0, 2, 5, 8]] + gs_rand_float(-0.4, 0.4, (len(envs_idx), 4), self.device)
+        self.dof_pos[envs_idx] = dof_pos
+        
         self.dof_vel[envs_idx] = 0.0
         self.robot.set_dofs_position(
             position=self.dof_pos[envs_idx],
@@ -381,45 +376,28 @@ class LeggedRobot(BaseTask):
         Args:
             env_ids (List[int]): Environemnt ids
         """
+        # base pos: xy [-1, 1]
         self.base_pos[envs_idx] = self.base_init_pos
-        self.base_pos[envs_idx, :2] += gs_rand_float(
-            -1.0, 1.0, (len(envs_idx), 2), self.device
-        )
+        self.base_pos[envs_idx, :2] += gs_rand_float(-1.0, 1.0, (len(envs_idx), 2), self.device)
+        self.robot.set_pos(self.base_pos[envs_idx], zero_velocity=False, envs_idx=envs_idx)
+        
+        # base quat
         self.base_quat[envs_idx] = self.base_init_quat.reshape(1, -1)
-        base_euler = gs_rand_float(
-            -0.1, 0.1, (len(envs_idx), 3), self.device
-        )
-        base_euler[:, 2] = gs_rand_float(0.0, 3.14, (len(envs_idx),), self.device)
-        self.base_quat[envs_idx] = gs_quat_mul(
-            gs_euler2quat(base_euler),
-            self.base_quat[envs_idx],
-        )
-        self.robot.set_pos(
-            self.base_pos[envs_idx], zero_velocity=False, envs_idx=envs_idx
-        )
-        self.robot.set_quat(
-            self.base_quat[envs_idx], zero_velocity=False, envs_idx=envs_idx
-        )
+        base_euler = gs_rand_float(-0.1, 0.1, (len(envs_idx), 3), self.device) # roll, pitch [-0.1, 0.1]
+        base_euler[:, 2] = gs_rand_float(*self.cfg.init_state.yaw_angle_range, (len(envs_idx),), self.device) # yaw angle
+        self.base_quat[envs_idx] = gs_quat_mul(gs_euler2quat(base_euler), self.base_quat[envs_idx],)
+        self.robot.set_quat(self.base_quat[envs_idx], zero_velocity=False, envs_idx=envs_idx)
         self.robot.zero_all_dofs_velocity(envs_idx)
 
         # update projected gravity
         inv_base_quat = gs_inv_quat(self.base_quat)
-        self.projected_gravity = gs_transform_by_quat(
-            self.global_gravity, inv_base_quat
-        )
+        self.projected_gravity = gs_transform_by_quat(self.global_gravity, inv_base_quat)
+        
         # reset root states - velocity
-        self.base_lin_vel[envs_idx] = (
-            0  # gs_rand_float(-0.5, 0.5, (len(envs_idx), 3), self.device)
-        )
-        self.base_ang_vel[envs_idx] = (
-            0.0  # gs_rand_float(-0.5, 0.5, (len(envs_idx), 3), self.device)
-        )
-        base_vel = torch.concat(
-            [self.base_lin_vel[envs_idx], self.base_ang_vel[envs_idx]], dim=1
-        )
-        self.robot.set_dofs_velocity(
-            velocity=base_vel, dofs_idx_local=[0, 1, 2, 3, 4, 5], envs_idx=envs_idx
-        )
+        self.base_lin_vel[envs_idx] = (gs_rand_float(-0.5, 0.5, (len(envs_idx), 3), self.device))
+        self.base_ang_vel[envs_idx] = (gs_rand_float(-0.5, 0.5, (len(envs_idx), 3), self.device))
+        base_vel = torch.concat([self.base_lin_vel[envs_idx], self.base_ang_vel[envs_idx]], dim=1)
+        self.robot.set_dofs_velocity(velocity=base_vel, dofs_idx_local=[0, 1, 2, 3, 4, 5], envs_idx=envs_idx)
 
     def _push_robots(self):
         """ Random pushes the robots. Emulates an impulse by setting a randomized base velocity. 
@@ -643,15 +621,19 @@ class LeggedRobot(BaseTask):
         self.robot = self.scene.add_entity(
             gs.morphs.URDF(
                 file=os.path.join(asset_root, asset_file),
-                merge_fixed_links = False,  # if merge_fixed_links is True, then one link may have multiple geometries, which will cause error in set_friction_ratio
+                merge_fixed_links = True,  # if merge_fixed_links is True, then one link may have multiple geometries, which will cause error in set_friction_ratio
+                links_to_keep = self.cfg.asset.links_to_keep,
                 pos= np.array(self.cfg.init_state.pos),
                 quat=np.array(self.cfg.init_state.rot),
+                fixed = self.cfg.asset.fix_base_link,
             ),
             visualize_contact=self.debug,
+            # vis_mode="collision",
         )
         
         # build
-        self.scene.build(n_envs=self.num_envs)
+        self.scene.build(n_envs=self.num_envs, 
+                         env_spacing=(self.cfg.env.env_spacing, self.cfg.env.env_spacing))
         
         # name to indices
         self.motor_dofs = [self.robot.get_joint(name).dof_idx_local for name in self.dof_names]
@@ -667,12 +649,11 @@ class LeggedRobot(BaseTask):
                 if flag:
                     link_indices.append(link.idx - self.robot.link_start)
             return link_indices
-        self.all_link_indices = find_link_indices(self.cfg.asset.all_links)
         self.termination_indices = find_link_indices(self.cfg.asset.terminate_after_contacts_on)
+        print("termination link indices:", self.termination_indices)
         self.penalized_indices = find_link_indices(self.cfg.asset.penalize_contacts_on)
         self.feet_indices = find_link_indices(self.cfg.asset.foot_name)
         assert len(self.termination_indices) > 0
-        assert len(self.penalized_indices) > 0
         assert len(self.feet_indices) > 0
         self.feet_link_indices_world_frame = [i+1 for i in self.feet_indices]
         
@@ -702,8 +683,13 @@ class LeggedRobot(BaseTask):
     
     def _randomize_friction(self, env_ids=None):
         ''' Randomize friction of all links'''
-        friction_ratios = gs_rand_float(*self.cfg.domain_rand.friction_range, (len(env_ids), self.robot.n_links), device=self.device)
-        self.robot.set_friction_ratio(friction_ratios, self.all_link_indices, env_ids)
+        min_friction, max_friction = self.cfg.domain_rand.friction_range
+
+        solver = self.rigid_solver
+
+        ratios = gs.rand((len(env_ids), 1), dtype=float).repeat(1, solver.n_geoms) \
+                 * (max_friction - min_friction) + min_friction
+        solver.set_geoms_friction_ratio(ratios, torch.arange(0, solver.n_geoms), env_ids)
     
     def _randomize_base_mass(self, env_ids=None):
         ''' Randomize base mass'''
@@ -745,26 +731,11 @@ class LeggedRobot(BaseTask):
         self.simulate_action_latency = self.cfg.domain_rand.simulate_action_latency
         self.debug = self.cfg.env.debug
         
-    # def _draw_debug_vis(self):
-    #     """ Draws visualizations for dubugging (slows down simulation a lot).
-    #         Default behaviour: draws height measurement points
-    #     """
-    #     # draw height lines
-    #     if not self.terrain.cfg.measure_heights:
-    #         return
-    #     self.gym.clear_lines(self.viewer)
-    #     self.gym.refresh_rigid_body_state_tensor(self.sim)
-    #     sphere_geom = gymutil.WireframeSphereGeometry(0.02, 4, 4, None, color=(1, 1, 0))
-    #     for i in range(self.num_envs):
-    #         base_pos = (self.root_states[i, :3]).cpu().numpy()
-    #         heights = self.measured_heights[i].cpu().numpy()
-    #         height_points = quat_apply_yaw(self.base_quat[i].repeat(heights.shape[0]), self.height_points[i]).cpu().numpy()
-    #         for j in range(heights.shape[0]):
-    #             x = height_points[j, 0] + base_pos[0]
-    #             y = height_points[j, 1] + base_pos[1]
-    #             z = heights[j]
-    #             sphere_pose = gymapi.Transform(gymapi.Vec3(x, y, z), r=None)
-    #             gymutil.draw_lines(sphere_geom, self.gym, self.viewer, self.envs[i], sphere_pose) 
+    def _draw_debug_vis(self):
+        """ Draws visualizations for dubugging (slows down simulation a lot).
+            Default behaviour: draws height measurement points
+        """
+        # self.scene.draw_debug_arrow([0.,0.,2.], [1.,0.,0.], 0.1)
 
     def _init_height_points(self):
         """ Returns points at which the height measurments are sampled (in base frame)
@@ -894,7 +865,7 @@ class LeggedRobot(BaseTask):
         self.last_contacts = contact
         first_contact = (self.feet_air_time > 0.) * contact_filt
         self.feet_air_time += self.dt
-        rew_airTime = torch.sum((self.feet_air_time - 0.5) * first_contact, dim=1) # reward only on first contact with the ground
+        rew_airTime = torch.sum((self.feet_air_time - 0.2) * first_contact, dim=1) # reward only on first contact with the ground
         rew_airTime *= torch.norm(self.commands[:, :2], dim=1) > 0.1 #no reward for zero command
         self.feet_air_time *= ~contact_filt
         return rew_airTime

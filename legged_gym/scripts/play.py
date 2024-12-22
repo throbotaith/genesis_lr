@@ -17,6 +17,7 @@ def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 1)
+    env_cfg.env.debug_viz = True
     env_cfg.viewer.add_camera = True  # use a extra camera for moving
     env_cfg.terrain.num_rows = 1
     env_cfg.terrain.num_cols = 1
@@ -25,11 +26,14 @@ def play(args):
     env_cfg.domain_rand.randomize_friction = False
     env_cfg.domain_rand.push_robots = False
     env_cfg.domain_rand.randomize_base_mass = False
+    env_cfg.asset.fix_base_link = False
+    # initial state randomization
+    env_cfg.init_state.yaw_angle_range = [0., 0.]
     # velocity range
-    env_cfg.commands.ranges.lin_vel_x = [0.5, 0.5]
+    env_cfg.commands.ranges.lin_vel_x = [1.0, 1.0]
     env_cfg.commands.ranges.lin_vel_y = [0., 0.]
     env_cfg.commands.ranges.ang_vel_yaw = [0., 0.]
-    env_cfg.commands.ranges.heading = [0., 0.]
+    env_cfg.commands.ranges.heading = [0, 0]
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
@@ -48,7 +52,7 @@ def play(args):
     logger = Logger(env.dt)
     robot_index = 0 # which robot is used for logging
     joint_index = 1 # which joint is used for logging
-    stop_state_log = 100 # number of steps before plotting states
+    stop_state_log = 500 # number of steps before plotting states
     stop_rew_log = env.max_episode_length + 1 # number of steps before print average episode rewards
     
     # for MOVE_CAMERA
@@ -57,8 +61,12 @@ def play(args):
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
     # for FOLLOW_ROBOT
     camera_lookat_follow = np.array(env_cfg.viewer.lookat)
-    camera_deviation_follow = np.array([2., 2., 1.])
+    camera_deviation_follow = np.array([0., 2., -1.])
     camera_position_follow = camera_lookat_follow - camera_deviation_follow
+    # for RECORD_FRAMES
+    stop_record = 400
+    if RECORD_FRAMES:
+        env.floating_camera.start_recording()
 
     for i in range(10*int(env.max_episode_length)):
         actions = policy(obs.detach())
@@ -74,6 +82,13 @@ def play(args):
             camera_position_follow = camera_lookat_follow - camera_deviation_follow
             env.set_camera(camera_position_follow, camera_lookat_follow)
             env.floating_camera.render()
+        if RECORD_FRAMES and i == stop_record:
+            env.floating_camera.stop_recording(save_to_filename="go2_flat.mp4", fps=30)
+            print("Saved recording to " + "go2_flat.mp4")
+        
+        # print debug info
+        # print("base lin vel: ", env.base_lin_vel[robot_index, :].cpu().numpy())
+        # print("base yaw angle: ", env.base_euler[robot_index, 2].item())
         
         if i < stop_state_log:
             logger.log_states(
@@ -104,7 +119,7 @@ def play(args):
 
 if __name__ == '__main__':
     EXPORT_POLICY = True
-    RECORD_FRAMES = False
+    RECORD_FRAMES = False  # only record frames in extra camera view
     MOVE_CAMERA   = False
     FOLLOW_ROBOT  = False
     assert not (MOVE_CAMERA and FOLLOW_ROBOT), "Cannot move camera and follow robot at the same time"

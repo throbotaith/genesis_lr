@@ -5,6 +5,7 @@ class GO2Cfg( LeggedRobotCfg ):
     class env( LeggedRobotCfg.env ):
         num_envs = 10000
         num_observations = 48
+        nv_spacing = 3.  # not used with heightfields/trimeshes
     
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'plane' # "heightfield" # none, plane, heightfield or trimesh
@@ -29,6 +30,8 @@ class GO2Cfg( LeggedRobotCfg ):
             'FR_calf_joint': -1.5,  # [rad]
             'RR_calf_joint': -1.5,    # [rad]
         }
+        # initial state randomization
+        yaw_angle_range = [0., 3.14] # min max [rad]
 
     class control( LeggedRobotCfg.control ):
         # PD Drive parameters:
@@ -56,18 +59,32 @@ class GO2Cfg( LeggedRobotCfg ):
             'RL_calf_joint',]
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["base", "hip", "Head"]
-        all_links = ["base", "hip", "thigh", "calf", "foot"]
+        terminate_after_contacts_on = ["base"]
+        links_to_keep = ['FL_foot', 'FR_foot', 'RL_foot', 'RR_foot']
         self_collisions = True
   
     class rewards( LeggedRobotCfg.rewards ):
         soft_dof_pos_limit = 0.9
         base_height_target = 0.36
         class scales( LeggedRobotCfg.rewards.scales ):
-            termination = 0.
-            torques = -0.0002
+            # limitation
             dof_pos_limits = -10.0
+            collision = -1.0
+            # command tracking
+            tracking_lin_vel = 1.0
+            tracking_ang_vel = 0.5
+            # smooth
+            lin_vel_z = -2.0
             base_height = -1.0
+            ang_vel_xy = -0.05
+            orientation = -3.0
+            dof_vel = -5.e-4
+            dof_acc = -2.e-7
+            action_rate = -0.01
+            torques = -2.e-4
+            # gait
+            feet_air_time = 1.0
+            dof_close_to_default = -0.1
     
     class commands( LeggedRobotCfg.commands ):
         curriculum = True
@@ -92,6 +109,14 @@ class GO2Cfg( LeggedRobotCfg ):
         simulate_action_latency = False # 1 step delay
         randomize_com_displacement = True
         com_displacement_range = [-0.01, 0.01]
+    
+    # viewer camera:
+    class viewer:
+        ref_env = 0
+        pos = [10, 0, 6]       # [m]
+        lookat = [11., 5, 3.]  # [m]
+        num_rendered_envs = 10  # number of environments to be rendered
+        add_camera = False
 
 class GO2CfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):
@@ -100,6 +125,6 @@ class GO2CfgPPO( LeggedRobotCfgPPO ):
         run_name = ''
         experiment_name = 'go2'
         save_interval = 100
-        load_run = "Dec21_20-15-03_"
+        load_run = "Dec22_13-55-49_"
         checkpoint = -1
-        max_iterations = 1500
+        max_iterations = 600

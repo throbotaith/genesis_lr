@@ -10,6 +10,7 @@ class LeggedRobotCfg(BaseConfig):
         send_timeouts = True # send time out information to the algorithm
         episode_length_s = 20 # episode length in seconds
         debug = False # if debugging, visualize contacts, 
+        debug_viz = False
 
     class terrain:
         mesh_type = 'plane' # "heightfield" # none, plane, heightfield or trimesh
@@ -49,9 +50,11 @@ class LeggedRobotCfg(BaseConfig):
 
     class init_state:
         pos = [0.0, 0.0, 1.] # x,y,z [m]
-        rot = [0.0, 0.0, 0.0, 1.0] # x,y,z,w [quat]
+        rot = [1.0, 0.0, 0.0, 0.0] # w, x, y, z [quat]
         lin_vel = [0.0, 0.0, 0.0]  # x,y,z [m/s]
         ang_vel = [0.0, 0.0, 0.0]  # x,y,z [rad/s]
+        # initial state randomization
+        yaw_angle_range = [0.0, 0.0] # min max [rad]
         default_joint_angles = { # target angles when action = 0.0
             "joint_a": 0., 
             "joint_b": 0.}
@@ -74,8 +77,9 @@ class LeggedRobotCfg(BaseConfig):
         foot_name = "None"     # name of the feet bodies, used to index body state and contact force tensors
         penalize_contacts_on = []
         terminate_after_contacts_on = []
-        all_links = []
+        links_to_keep = []
         self_collisions = True   # enable self collisions by default
+        fix_base_link = False    # fix base link to the world
         
     class domain_rand:
         randomize_friction = True
@@ -106,6 +110,8 @@ class LeggedRobotCfg(BaseConfig):
             feet_stumble = -0.0 
             action_rate = -0.01
             stand_still = -0.
+        
+        only_positive_rewards = True
         tracking_sigma = 0.25 # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1. # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.
