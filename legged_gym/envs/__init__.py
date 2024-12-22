@@ -31,9 +31,12 @@
 from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
 from .base.legged_robot import LeggedRobot
 from legged_gym.envs.go2.go2_config import GO2Cfg, GO2CfgPPO
+from legged_gym.envs.go2.go2_deploy.go2_deploy import GO2Deploy
+from legged_gym.envs.go2.go2_deploy.go2_deploy_config import GO2DeployCfg, GO2DeployCfgPPO
 import os
 
 from legged_gym.utils.task_registry import task_registry
 
 task_registry.register( "go2", LeggedRobot, GO2Cfg(), GO2CfgPPO())
+task_registry.register( "go2_deploy", GO2Deploy, GO2DeployCfg(), GO2DeployCfgPPO())
 

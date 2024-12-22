@@ -650,9 +650,13 @@ class LeggedRobot(BaseTask):
                     link_indices.append(link.idx - self.robot.link_start)
             return link_indices
         self.termination_indices = find_link_indices(self.cfg.asset.terminate_after_contacts_on)
+        all_link_names = [link.name for link in self.robot.links]
+        print(f"all link names: {all_link_names}")
         print("termination link indices:", self.termination_indices)
         self.penalized_indices = find_link_indices(self.cfg.asset.penalize_contacts_on)
+        print(f"penalized link indices: {self.penalized_indices}")
         self.feet_indices = find_link_indices(self.cfg.asset.foot_name)
+        print(f"feet link indices: {self.feet_indices}")
         assert len(self.termination_indices) > 0
         assert len(self.feet_indices) > 0
         self.feet_link_indices_world_frame = [i+1 for i in self.feet_indices]

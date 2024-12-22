@@ -69,6 +69,36 @@ def get_load_path(root, load_run=-1, checkpoint=-1):
     load_path = os.path.join(load_run, model)
     return load_path
 
+def get_load_path_ee(root, load_run=-1, checkpoint=-1):
+    try:
+        runs = os.listdir(root)
+        #TODO sort by date to handle change of month
+        runs.sort()
+        if 'exported' in runs: runs.remove('exported')
+        last_run = os.path.join(root, runs[-1])
+    except:
+        raise ValueError("No runs in this directory: " + root)
+    if load_run==-1:
+        load_run = last_run
+    else:
+        load_run = os.path.join(root, load_run)
+
+    if checkpoint==-1:
+        models = [file for file in os.listdir(load_run) if 'model' in file]
+        models.sort(key=lambda m: '{0:0>15}'.format(m))
+        model = models[-1]
+        # estimator
+        estimators = [file for file in os.listdir(load_run) if 'estimator' in file]
+        estimators.sort(key=lambda m: '{0:0>15}'.format(m))
+        estimator = estimators[-1]
+    else:
+        model = "model_{}.pt".format(checkpoint)
+        estimator = "estimator_{}.pt".format(checkpoint)
+
+    actor_load_path = os.path.join(load_run, model)
+    estimator_load_path = os.path.join(load_run, estimator)
+    return actor_load_path, estimator_load_path
+
 def update_cfg_from_args(env_cfg, cfg_train, args):
     # seed
     if env_cfg is not None:
@@ -86,7 +116,7 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--task',           type=str, default='go2')
+    parser.add_argument('--task',           type=str, default='go2_deploy')
     parser.add_argument('--headless',       action='store_true', default=False)  # enable visualization by default
     parser.add_argument('-c', '--cpu',      action='store_true', default=False)  # use cuda by default
     parser.add_argument('-B', '--num_envs', type=int, default=None)
@@ -110,6 +140,13 @@ def export_policy_as_jit(actor_critic, path):
         model = copy.deepcopy(actor_critic.actor).to('cpu')
         traced_script_module = torch.jit.script(model)
         traced_script_module.save(path)
+    
+def export_estimator_as_jit(estimator, path):
+    os.makedirs(path, exist_ok=True)
+    path = os.path.join(path, "estimator_1.pt")
+    model = copy.deepcopy(estimator).to("cpu")
+    traced_script_module = torch.jit.script(model)
+    traced_script_module.save(path)
 
 
 class PolicyExporterLSTM(torch.nn.Module):
