@@ -116,7 +116,7 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--task',           type=str, default='go2_deploy')
+    parser.add_argument('--task',           type=str, default='go2')
     parser.add_argument('--headless',       action='store_true', default=False)  # enable visualization by default
     parser.add_argument('-c', '--cpu',      action='store_true', default=False)  # use cuda by default
     parser.add_argument('-B', '--num_envs', type=int, default=None)

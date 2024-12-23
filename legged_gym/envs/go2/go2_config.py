@@ -57,7 +57,7 @@ class GO2Cfg( LeggedRobotCfg ):
             'RL_hip_joint',
             'RL_thigh_joint',
             'RL_calf_joint',]
-        foot_name = "foot"
+        foot_name = ["foot"]
         penalize_contacts_on = ["thigh", "calf"]
         terminate_after_contacts_on = ["base"]
         links_to_keep = ['FL_foot', 'FR_foot', 'RL_foot', 'RR_foot']

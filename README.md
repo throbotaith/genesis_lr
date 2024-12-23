@@ -2,6 +2,14 @@
 
 A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for training legged robots in [genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main)
 
+---
+## Updates
+
+- 2024/12/23: divide main and deploy branches, deploy branch should be used with a custom rsl_rl(which will be open-source soon)
+---
+
+> All the tests below are conducted on a desktop with RTX 3080 10GB graphics memory.
+
 ## 🌟 Features
 
 - **Totally based on [legged_gym](https://github.com/leggedrobotics/legged_gym)**
