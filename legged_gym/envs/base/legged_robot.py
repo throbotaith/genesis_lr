@@ -195,13 +195,13 @@ class LeggedRobot(BaseTask):
     def compute_observations(self):
         """ Computes observations
         """
-        self.obs_buf = torch.cat((  self.base_lin_vel * self.obs_scales.lin_vel,
-                                    self.base_ang_vel  * self.obs_scales.ang_vel,
-                                    self.projected_gravity,
-                                    self.commands[:, :3] * self.commands_scale,
-                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
-                                    self.dof_vel * self.obs_scales.dof_vel,
-                                    self.actions
+        self.obs_buf = torch.cat((  self.base_lin_vel * self.obs_scales.lin_vel,                    # 3
+                                    self.base_ang_vel  * self.obs_scales.ang_vel,                   # 3
+                                    self.projected_gravity,                                         # 3
+                                    self.commands[:, :3] * self.commands_scale,                     # 3
+                                    (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,# num_dofs
+                                    self.dof_vel * self.obs_scales.dof_vel,                         # num_dofs
+                                    self.actions                                                    # num_actions
                                     ),dim=-1)
         # add perceptive inputs if not blind
         # if self.cfg.terrain.measure_heights:
@@ -354,11 +354,7 @@ class LeggedRobot(BaseTask):
             env_ids (List[int]): Environemnt ids
         """
         
-        dof_pos = torch.zeros((len(envs_idx), self.num_actions), dtype=gs.tc_float, device=self.device)
-        dof_pos[:, [0, 3, 6, 9]] = self.default_dof_pos[[0, 3, 6, 9]] + gs_rand_float(-0.2, 0.2, (len(envs_idx), 4), self.device)
-        dof_pos[:, [1, 4, 7, 10]] = self.default_dof_pos[[0, 1, 4, 7]] + gs_rand_float(-0.4, 0.4, (len(envs_idx), 4), self.device)
-        dof_pos[:, [2, 5, 8, 11]] = self.default_dof_pos[[0, 2, 5, 8]] + gs_rand_float(-0.4, 0.4, (len(envs_idx), 4), self.device)
-        self.dof_pos[envs_idx] = dof_pos
+        self.dof_pos[envs_idx] = (self.default_dof_pos) + gs_rand_float(-0.3, 0.3, (len(envs_idx), self.num_actions), self.device)
         
         self.dof_vel[envs_idx] = 0.0
         self.robot.set_dofs_position(
@@ -618,18 +614,29 @@ class LeggedRobot(BaseTask):
         asset_root = os.path.dirname(asset_path)
         asset_file = os.path.basename(asset_path)
         
-        self.robot = self.scene.add_entity(
-            gs.morphs.URDF(
-                file=os.path.join(asset_root, asset_file),
-                merge_fixed_links = True,  # if merge_fixed_links is True, then one link may have multiple geometries, which will cause error in set_friction_ratio
-                links_to_keep = self.cfg.asset.links_to_keep,
-                pos= np.array(self.cfg.init_state.pos),
-                quat=np.array(self.cfg.init_state.rot),
-                fixed = self.cfg.asset.fix_base_link,
-            ),
-            visualize_contact=self.debug,
-            # vis_mode="collision",
-        )
+        if "urdf" in asset_file:
+            self.robot = self.scene.add_entity(
+                gs.morphs.URDF(
+                    file=os.path.join(asset_root, asset_file),
+                    merge_fixed_links = True,  # if merge_fixed_links is True, then one link may have multiple geometries, which will cause error in set_friction_ratio
+                    links_to_keep = self.cfg.asset.links_to_keep,
+                    pos= np.array(self.cfg.init_state.pos),
+                    quat=np.array(self.cfg.init_state.rot),
+                    fixed = self.cfg.asset.fix_base_link,
+                ),
+                visualize_contact=self.debug,
+                # vis_mode="collision",
+            )
+        elif "xml" in asset_file:
+            self.robot = self.scene.add_entity(
+                gs.morphs.MJCF(
+                    file=os.path.join(asset_root, asset_file),
+                    pos= np.array(self.cfg.init_state.pos),
+                    quat=np.array(self.cfg.init_state.rot),
+                ),
+                visualize_contact=self.debug,
+                vis_mode="collision"
+            )
         
         # build
         self.scene.build(n_envs=self.num_envs, 
@@ -869,7 +876,7 @@ class LeggedRobot(BaseTask):
         self.last_contacts = contact
         first_contact = (self.feet_air_time > 0.) * contact_filt
         self.feet_air_time += self.dt
-        rew_airTime = torch.sum((self.feet_air_time - 0.2) * first_contact, dim=1) # reward only on first contact with the ground
+        rew_airTime = torch.sum((self.feet_air_time - 0.5) * first_contact, dim=1) # reward only on first contact with the ground
         rew_airTime *= torch.norm(self.commands[:, :2], dim=1) > 0.1 #no reward for zero command
         self.feet_air_time *= ~contact_filt
         return rew_airTime

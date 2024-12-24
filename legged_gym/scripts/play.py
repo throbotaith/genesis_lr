@@ -61,7 +61,7 @@ def play(args):
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
     # for FOLLOW_ROBOT
     camera_lookat_follow = np.array(env_cfg.viewer.lookat)
-    camera_deviation_follow = np.array([0., 2., -1.])
+    camera_deviation_follow = np.array([0., 3., -1.])
     camera_position_follow = camera_lookat_follow - camera_deviation_follow
     # for RECORD_FRAMES
     stop_record = 400
@@ -83,8 +83,8 @@ def play(args):
             env.set_camera(camera_position_follow, camera_lookat_follow)
             env.floating_camera.render()
         if RECORD_FRAMES and i == stop_record:
-            env.floating_camera.stop_recording(save_to_filename="go2_flat.mp4", fps=30)
-            print("Saved recording to " + "go2_flat.mp4")
+            env.floating_camera.stop_recording(save_to_filename="bipedal_walker_flat.mp4", fps=30)
+            print("Saved recording to " + "bipedal_walker_flat.mp4")
         
         # print debug info
         # print("base lin vel: ", env.base_lin_vel[robot_index, :].cpu().numpy())
@@ -119,9 +119,9 @@ def play(args):
 
 if __name__ == '__main__':
     EXPORT_POLICY = True
-    RECORD_FRAMES = False  # only record frames in extra camera view
+    RECORD_FRAMES = True  # only record frames in extra camera view
     MOVE_CAMERA   = False
-    FOLLOW_ROBOT  = False
+    FOLLOW_ROBOT  = True
     assert not (MOVE_CAMERA and FOLLOW_ROBOT), "Cannot move camera and follow robot at the same time"
     args = get_args()
     play(args)

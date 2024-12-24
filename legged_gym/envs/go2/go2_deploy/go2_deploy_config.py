@@ -5,6 +5,7 @@ class GO2DeployCfg( LeggedRobotCfg ):
     class env( LeggedRobotCfg.env ):
         num_envs = 10000
         env_spacing = 3.  # not used with heightfields/trimeshes
+        num_actions = 12
         # for OnPolicyRunnerEE
         num_estimator_input = 129
         num_estimator_output = 7
