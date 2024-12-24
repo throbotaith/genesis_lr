@@ -109,5 +109,5 @@ Then, run `play.py` to visualize the trained model:
 ## TODO
 
 - [x] Add domain randomization
-- [ ] Verify the trained model on real robots.
+- [x] Verify the trained model on real robots.
 - [ ] Add Heightfield support
