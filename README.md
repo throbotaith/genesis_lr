@@ -5,6 +5,8 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 ---
 ## Updates
 
+- 2024/12/24: add a new demo environment `bipedal_walker`
+
 - 2024/12/23: divide main and deploy branches, deploy branch should be used with a custom rsl_rl(which will be open-source soon)
 ---
 
@@ -90,6 +92,11 @@ Then, run `play.py` to visualize the trained model:
 
 ![](./test/go2_flat_play.gif)
 
+## 🖼️ Gallery
+
+| Go2 | Bipedal Walker |
+|--- | --- |
+| ![](./test_resources/go2_flat_play.gif) | ![](./test_resources/bipedal_walker_flat.gif) |
 
 ## Acknowledgements
 
