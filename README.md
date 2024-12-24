@@ -23,18 +23,18 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
   For a go2 walking on the plane task with 4096 envs, the training speed is approximately **1.3x** compared to [Isaac Gym](https://developer.nvidia.com/isaac-gym).
   
   - Training speed in genesis: 
-  ![](./test/genesis_rl_speed.png)
+  ![](./test_resources/genesis_rl_speed.png)
 
   - Training speed in isaac gym: 
-  ![](./test/isaacgym_speed.png)
+  ![](./test_resources/isaacgym_speed.png)
   
   While the graphics memory usage is roughly **1/2** compared to IsaacGym.
 
   - Graphics memory usage in genesis: 
-  ![](./test/genesis_memory_usage.png)
+  ![](./test_resources/genesis_memory_usage.png)
 
   - Graphics memory usage in isaac gym: 
-  ![](./test/isaacgym_memory_usage.png)
+  ![](./test_resources/isaacgym_memory_usage.png)
 
   With this smaller memory usage, it's possible to **run more parallel environments**, which can further improve the training speed.
 
@@ -44,13 +44,13 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
   
   For a go2 walking on the plane task, training a policy with 10000 envs for 600 ites(which is 144M steps) takes about 12mins. The play result is as below:
   
-  ![](./test/go2_flat_play.gif)
+  ![](./test_resources/go2_flat_play.gif)
 
 - Real Robot
   
   Also for a go2 walking on the plane task, training policy+explicit estimator with 10000 envs for 1k ites takes about 23mins. Deployment result is as below:
 
-  ![](./test/genesis_deploy_test.gif)
+  ![](./test_resources/genesis_deploy_test.gif)
 
 ## 🛠 Installation
 
@@ -86,11 +86,11 @@ python train.py --headless # run training without rendering
 
 After the training is done, paste the `run_name` under `logs/go2` to `load_run` in `go2_config.py`: 
 
-![](./test/paste_load_run.png)
+![](./test_resources/paste_load_run.png)
 
 Then, run `play.py` to visualize the trained model:
 
-![](./test/go2_flat_play.gif)
+![](./test_resources/go2_flat_play.gif)
 
 ## 🖼️ Gallery
 
