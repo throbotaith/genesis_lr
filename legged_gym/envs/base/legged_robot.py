@@ -264,37 +264,12 @@ class LeggedRobot(BaseTask):
         
         # add terrain
         mesh_type = self.cfg.terrain.mesh_type # only plane for now
-        # if mesh_type == "embedded": # embedded terrain can't specify difficulty level
-        #     self.terrain = self.scene.add_entity(
-        #         gs.morphs.Terrain(
-        #             n_subterrains=self.cfg.terrain.n_subterrains,
-        #             horizontal_scale=self.cfg.terrain.horizontal_scale,
-        #             vertical_scale=self.cfg.terrain.vertical_scale,
-        #             subterrain_size=self.cfg.terrain.subterrain_size,
-        #             subterrain_types=self.cfg.terrain.subterrain_type,
-        #         )
-        #     )
-        #     terrain_margin_x = self.cfg.terrain.n_subterrains[0] * self.cfg.terrain.subterrain_size[0]
-        #     terrain_margin_y = self.cfg.terrain.n_subterrains[1] * self.cfg.terrain.subterrain_size[1]
-        #     self.terrain_margin = torch.tensor(
-        #         [terrain_margin_x, terrain_margin_y], device=self.device, dtype=gs.tc_float
-        #     )
-        #     height_field = self.terrain.geoms[0].metadata["height_field"]
-        #     self.height_field = torch.tensor(
-        #         height_field, device=self.device, dtype=gs.tc_float
-        #     ) * self.cfg.terrain.vertical_scale
-        #     print("Terrain height field shape:", self.height_field.shape)
-        #     self._calc_embedded_terrain_origins()
         if mesh_type in ["heightfield"]:
             self.utils_terrain = Terrain(self.cfg.terrain, self.num_envs)
         if mesh_type=='plane':
             self.terrain = self.scene.add_entity(gs.morphs.URDF(file="urdf/plane/plane.urdf", fixed=True))
         elif mesh_type=='heightfield':
             self._create_heightfield()
-        # elif mesh_type=='heightfield':
-        #     self._create_heightfield()
-        # elif mesh_type=='trimesh':
-        #     self._create_trimesh()
         elif mesh_type is not None:
             raise ValueError("Terrain mesh type not recognised. Allowed types are [None, plane, heightfield, trimesh]")
         self.terrain.set_friction(self.cfg.terrain.friction)
@@ -397,8 +372,13 @@ class LeggedRobot(BaseTask):
             env_ids (List[int]): Environemnt ids
         """
         # base pos: xy [-1, 1]
-        self.base_pos[envs_idx] = self.base_init_pos
-        self.base_pos[envs_idx, :2] += gs_rand_float(-1.0, 1.0, (len(envs_idx), 2), self.device)
+        if self.custom_origins:   
+            self.base_pos[envs_idx] = self.base_init_pos
+            self.base_pos[envs_idx] += self.env_origins[envs_idx]
+            self.base_pos[envs_idx, :2] += gs_rand_float(-1.0, 1.0, (len(envs_idx), 2), self.device)
+        else:
+            self.base_pos[envs_idx] = self.base_init_pos
+            self.base_pos[envs_idx] += self.env_origins[envs_idx]
         self.robot.set_pos(self.base_pos[envs_idx], zero_velocity=False, envs_idx=envs_idx)
         
         # base quat
@@ -605,6 +585,8 @@ class LeggedRobot(BaseTask):
         self.terrain = self.scene.add_entity(
             gs.morphs.Terrain(
                 pos=(-self.cfg.terrain.border_size, -self.cfg.terrain.border_size, 0.0),
+                horizontal_scale=self.cfg.terrain.horizontal_scale,
+                vertical_scale=self.cfg.terrain.vertical_scale,
                 height_field=self.utils_terrain.heightsamples,
             )
         )
@@ -663,6 +645,9 @@ class LeggedRobot(BaseTask):
         # build
         self.scene.build(n_envs=self.num_envs, 
                          env_spacing=(self.cfg.env.env_spacing, self.cfg.env.env_spacing))
+        
+        # get env origins
+        self._get_env_origins()
         
         # name to indices
         self.motor_dofs = [self.robot.get_joint(name).dof_idx_local for name in self.dof_names]
@@ -763,12 +748,6 @@ class LeggedRobot(BaseTask):
         self.dof_names = self.cfg.asset.dof_names
         self.simulate_action_latency = self.cfg.domain_rand.simulate_action_latency
         self.debug = self.cfg.env.debug
-    
-    def _calc_embedded_terrain_origins(self):
-        """ Calculates the origins of the terrain patches in the world frame.
-            Used for embedded terrain."""
-        self.terrain_origins = torch.zeros(self.cfg.terrain.n_subterrains[0], self.cfg.terrain.n_subterrains[1], 3, 
-                                             device=self.device, requires_grad=False, dtype=gs.tc_float)
         
     def _draw_debug_vis(self):
         """ Draws visualizations for dubugging (slows down simulation a lot).
@@ -776,6 +755,33 @@ class LeggedRobot(BaseTask):
         """
         # self.scene.draw_debug_arrow([0.,0.,2.], [1.,0.,0.], 0.1)
 
+    def _get_env_origins(self):
+        """ Sets environment origins. On rough terrain the origins are defined by the terrain platforms.
+            Otherwise create a grid.
+        """
+        if self.cfg.terrain.mesh_type in ["heightfield"]:
+            self.custom_origins = True
+            self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
+            # put robots at the origins defined by the terrain
+            max_init_level = self.cfg.terrain.max_init_terrain_level
+            if not self.cfg.terrain.curriculum: max_init_level = self.cfg.terrain.num_rows - 1
+            self.terrain_levels = torch.randint(0, max_init_level+1, (self.num_envs,), device=self.device)
+            self.terrain_types = torch.div(torch.arange(self.num_envs, device=self.device), (self.num_envs/self.cfg.terrain.num_cols), rounding_mode='floor').to(torch.long)
+            self.max_terrain_level = self.cfg.terrain.num_rows
+            self.terrain_origins = torch.from_numpy(self.utils_terrain.env_origins).to(self.device).to(torch.float)
+            self.env_origins[:] = self.terrain_origins[self.terrain_levels, self.terrain_types]
+        else:
+            self.custom_origins = False
+            self.env_origins = torch.zeros(self.num_envs, 3, device=self.device, requires_grad=False)
+            # create a grid of robots
+            num_cols = np.floor(np.sqrt(self.num_envs))
+            num_rows = np.ceil(self.num_envs / num_cols)
+            xx, yy = torch.meshgrid(torch.arange(num_rows), torch.arange(num_cols))
+            spacing = self.cfg.env.env_spacing
+            self.env_origins[:, 0] = spacing * xx.flatten()[:self.num_envs]
+            self.env_origins[:, 1] = spacing * yy.flatten()[:self.num_envs]
+            self.env_origins[:, 2] = 0.
+    
     def _init_height_points(self):
         """ Returns points at which the height measurments are sampled (in base frame)
 

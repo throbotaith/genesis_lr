@@ -12,7 +12,7 @@ class GO2Cfg( LeggedRobotCfg ):
         mesh_type = "heightfield" # none, plane, heightfield
         friction = 1.0
         restitution = 0.
-        border_size = 10
+        border_size = 4
         selected = False # select a unique terrain type and pass all arguments
         terrain_kwargs = None # Dict of arguments for selected terrain
         terrain_length = 4.
