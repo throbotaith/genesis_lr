@@ -9,9 +9,16 @@ class GO2Cfg( LeggedRobotCfg ):
         env_spacing = 3.  # not used with heightfields/trimeshes
     
     class terrain( LeggedRobotCfg.terrain ):
-        mesh_type = 'plane' # "heightfield" # none, plane, heightfield or trimesh
+        mesh_type = "heightfield" # none, plane, heightfield
         friction = 1.0
         restitution = 0.
+        border_size = 10
+        selected = False # select a unique terrain type and pass all arguments
+        terrain_kwargs = None # Dict of arguments for selected terrain
+        terrain_length = 4.
+        terrain_width = 4.
+        num_rows= 2  # number of terrain rows (levels)
+        num_cols = 2 # number of terrain cols (types)
         
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.42] # x,y,z [m]

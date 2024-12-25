@@ -13,6 +13,7 @@ from typing import Tuple, Dict
 from legged_gym import LEGGED_GYM_ROOT_DIR
 from legged_gym.envs.base.base_task import BaseTask
 from legged_gym.utils.math import wrap_to_pi, torch_rand_sqrt_float
+from legged_gym.utils.terrain import Terrain
 from legged_gym.utils.helpers import class_to_dict
 from legged_gym.utils.gs_utils import *
 from .legged_robot_config import LeggedRobotCfg
@@ -263,10 +264,33 @@ class LeggedRobot(BaseTask):
         
         # add terrain
         mesh_type = self.cfg.terrain.mesh_type # only plane for now
-        # if mesh_type in ['heightfield', 'trimesh']:
-        #     self.terrain = Terrain(self.cfg.terrain, self.num_envs)
+        # if mesh_type == "embedded": # embedded terrain can't specify difficulty level
+        #     self.terrain = self.scene.add_entity(
+        #         gs.morphs.Terrain(
+        #             n_subterrains=self.cfg.terrain.n_subterrains,
+        #             horizontal_scale=self.cfg.terrain.horizontal_scale,
+        #             vertical_scale=self.cfg.terrain.vertical_scale,
+        #             subterrain_size=self.cfg.terrain.subterrain_size,
+        #             subterrain_types=self.cfg.terrain.subterrain_type,
+        #         )
+        #     )
+        #     terrain_margin_x = self.cfg.terrain.n_subterrains[0] * self.cfg.terrain.subterrain_size[0]
+        #     terrain_margin_y = self.cfg.terrain.n_subterrains[1] * self.cfg.terrain.subterrain_size[1]
+        #     self.terrain_margin = torch.tensor(
+        #         [terrain_margin_x, terrain_margin_y], device=self.device, dtype=gs.tc_float
+        #     )
+        #     height_field = self.terrain.geoms[0].metadata["height_field"]
+        #     self.height_field = torch.tensor(
+        #         height_field, device=self.device, dtype=gs.tc_float
+        #     ) * self.cfg.terrain.vertical_scale
+        #     print("Terrain height field shape:", self.height_field.shape)
+        #     self._calc_embedded_terrain_origins()
+        if mesh_type in ["heightfield"]:
+            self.utils_terrain = Terrain(self.cfg.terrain, self.num_envs)
         if mesh_type=='plane':
             self.terrain = self.scene.add_entity(gs.morphs.URDF(file="urdf/plane/plane.urdf", fixed=True))
+        elif mesh_type=='heightfield':
+            self._create_heightfield()
         # elif mesh_type=='heightfield':
         #     self._create_heightfield()
         # elif mesh_type=='trimesh':
@@ -518,6 +542,11 @@ class LeggedRobot(BaseTask):
             device=self.device,
             dtype=gs.tc_int, 
         )
+        self.terrain_heights = torch.zeros(
+            (self.num_envs,),
+            device=self.device,
+            dtype=gs.tc_float,
+        )
         # if self.cfg.terrain.measure_heights:
         #     self.height_points = self._init_height_points()
         # self.measured_heights = 0
@@ -570,24 +599,17 @@ class LeggedRobot(BaseTask):
         self.episode_sums = {name: torch.zeros(self.num_envs, dtype=gs.tc_float, device=self.device, requires_grad=False)
                              for name in self.reward_scales.keys()}
     
-    # def _create_heightfield(self):
-    #     """ Adds a heightfield terrain to the simulation, sets parameters based on the cfg.
-    #     """
-    #     hf_params = gymapi.HeightFieldParams()
-    #     hf_params.column_scale = self.terrain.cfg.horizontal_scale
-    #     hf_params.row_scale = self.terrain.cfg.horizontal_scale
-    #     hf_params.vertical_scale = self.terrain.cfg.vertical_scale
-    #     hf_params.nbRows = self.terrain.tot_cols
-    #     hf_params.nbColumns = self.terrain.tot_rows 
-    #     hf_params.transform.p.x = -self.terrain.cfg.border_size 
-    #     hf_params.transform.p.y = -self.terrain.cfg.border_size
-    #     hf_params.transform.p.z = 0.0
-    #     hf_params.static_friction = self.cfg.terrain.static_friction
-    #     hf_params.dynamic_friction = self.cfg.terrain.dynamic_friction
-    #     hf_params.restitution = self.cfg.terrain.restitution
-
-    #     self.gym.add_heightfield(self.sim, self.terrain.heightsamples, hf_params)
-    #     self.height_samples = torch.tensor(self.terrain.heightsamples).view(self.terrain.tot_rows, self.terrain.tot_cols).to(self.device)
+    def _create_heightfield(self):
+        """ Adds a heightfield terrain to the simulation, sets parameters based on the cfg.
+        """
+        self.terrain = self.scene.add_entity(
+            gs.morphs.Terrain(
+                pos=(-self.cfg.terrain.border_size, -self.cfg.terrain.border_size, 0.0),
+                height_field=self.utils_terrain.heightsamples,
+            )
+        )
+        self.height_samples = torch.tensor(self.utils_terrain.heightsamples).view(
+            self.utils_terrain.tot_rows, self.utils_terrain.tot_cols).to(self.device)
 
     # def _create_trimesh(self):
     #     """ Adds a triangle mesh terrain to the simulation, sets parameters based on the cfg.
@@ -741,6 +763,12 @@ class LeggedRobot(BaseTask):
         self.dof_names = self.cfg.asset.dof_names
         self.simulate_action_latency = self.cfg.domain_rand.simulate_action_latency
         self.debug = self.cfg.env.debug
+    
+    def _calc_embedded_terrain_origins(self):
+        """ Calculates the origins of the terrain patches in the world frame.
+            Used for embedded terrain."""
+        self.terrain_origins = torch.zeros(self.cfg.terrain.n_subterrains[0], self.cfg.terrain.n_subterrains[1], 3, 
+                                             device=self.device, requires_grad=False, dtype=gs.tc_float)
         
     def _draw_debug_vis(self):
         """ Draws visualizations for dubugging (slows down simulation a lot).
