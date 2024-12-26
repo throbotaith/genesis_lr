@@ -3,7 +3,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 class GO2Cfg( LeggedRobotCfg ):
     
     class env( LeggedRobotCfg.env ):
-        num_envs = 10000
+        num_envs = 100
         num_observations = 48
         num_actions = 12
         env_spacing = 3.  # not used with heightfields/trimeshes
@@ -12,13 +12,8 @@ class GO2Cfg( LeggedRobotCfg ):
         mesh_type = "heightfield" # none, plane, heightfield
         friction = 1.0
         restitution = 0.
-        border_size = 4
-        selected = False # select a unique terrain type and pass all arguments
-        terrain_kwargs = None # Dict of arguments for selected terrain
-        terrain_length = 4.
-        terrain_width = 4.
-        num_rows= 2  # number of terrain rows (levels)
-        num_cols = 2 # number of terrain cols (types)
+        # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
+        terrain_proportions = [0.25, 0.25, 0.25, 0.25, 0]
         
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.42] # x,y,z [m]
@@ -123,7 +118,7 @@ class GO2Cfg( LeggedRobotCfg ):
         ref_env = 0
         pos = [10, 0, 6]       # [m]
         lookat = [11., 5, 3.]  # [m]
-        num_rendered_envs = 10  # number of environments to be rendered
+        num_rendered_envs = 100  # number of environments to be rendered
         add_camera = False
 
 class GO2CfgPPO( LeggedRobotCfgPPO ):

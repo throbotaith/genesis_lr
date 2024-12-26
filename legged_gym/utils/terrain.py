@@ -36,10 +36,9 @@ from . import terrain_utils
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg
 
 class Terrain:
-    def __init__(self, cfg: LeggedRobotCfg.terrain, num_robots) -> None:
+    def __init__(self, cfg: LeggedRobotCfg.terrain) -> None:
 
         self.cfg = cfg
-        self.num_robots = num_robots
         self.type = cfg.mesh_type
         if self.type in ["none", 'plane']:
             return
@@ -92,21 +91,16 @@ class Terrain:
                 self.add_terrain_to_map(terrain, i, j)
 
     def selected_terrain(self):
-        # terrain_type = self.cfg.terrain_kwargs.pop('type')
-        for k in range(self.cfg.num_sub_terrains):
-            # Env coordinates in the world
-            (i, j) = np.unravel_index(k, (self.cfg.num_rows, self.cfg.num_cols))
-
-            terrain = terrain_utils.SubTerrain("terrain",
-                              width=self.width_per_env_pixels,
-                              length=self.width_per_env_pixels,
-                              vertical_scale=self.cfg.vertical_scale,
-                              horizontal_scale=self.cfg.horizontal_scale)
-
-            # eval(terrain_type)(terrain, **self.cfg.terrain_kwargs.terrain_kwargs)
-            
-            terrain = terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=0.05, platform_size=2.)
-            self.add_terrain_to_map(terrain, i, j)
+        for j in range(self.cfg.num_cols):
+            for i in range(self.cfg.num_rows):
+                terrain = terrain_utils.SubTerrain("terrain",
+                                width=self.width_per_env_pixels,
+                                length=self.width_per_env_pixels,
+                                vertical_scale=self.cfg.vertical_scale,
+                                horizontal_scale=self.cfg.horizontal_scale)
+                
+                terrain = terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.3, step_height=0.05, platform_size=3.)
+                self.add_terrain_to_map(terrain, i, j)
     
     def make_terrain(self, choice, difficulty):
         terrain = terrain_utils.SubTerrain(   "terrain",
@@ -158,6 +152,7 @@ class Terrain:
 
         env_origin_x = (i + 0.5) * self.env_length
         env_origin_y = (j + 0.5) * self.env_width
+        # use the origin height as the max height of a 2mx2m square
         x1 = int((self.env_length/2. - 1) / terrain.horizontal_scale)
         x2 = int((self.env_length/2. + 1) / terrain.horizontal_scale)
         y1 = int((self.env_width/2. - 1) / terrain.horizontal_scale)

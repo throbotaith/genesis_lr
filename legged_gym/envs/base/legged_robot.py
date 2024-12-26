@@ -134,9 +134,9 @@ class LeggedRobot(BaseTask):
         """
         if len(env_ids) == 0:
             return
-        # # update curriculum
-        # if self.cfg.terrain.curriculum:
-        #     self._update_terrain_curriculum(env_ids)
+        # update curriculum
+        if self.cfg.terrain.curriculum:
+            self._update_terrain_curriculum(env_ids)
         # avoid updating command curriculum at each step since the maximum command is common to all envs
         if self.cfg.commands.curriculum and (self.common_step_counter % self.max_episode_length==0):
             self.update_command_curriculum(env_ids)
@@ -264,11 +264,10 @@ class LeggedRobot(BaseTask):
         
         # add terrain
         mesh_type = self.cfg.terrain.mesh_type # only plane for now
-        if mesh_type in ["heightfield"]:
-            self.utils_terrain = Terrain(self.cfg.terrain, self.num_envs)
         if mesh_type=='plane':
             self.terrain = self.scene.add_entity(gs.morphs.URDF(file="urdf/plane/plane.urdf", fixed=True))
         elif mesh_type=='heightfield':
+            self.utils_terrain = Terrain(self.cfg.terrain)
             self._create_heightfield()
         elif mesh_type is not None:
             raise ValueError("Terrain mesh type not recognised. Allowed types are [None, plane, heightfield, trimesh]")
@@ -411,27 +410,27 @@ class LeggedRobot(BaseTask):
             dofs_vel[:, :2] += push_vel
             self.robot.set_dofs_velocity(dofs_vel)
 
-    # def _update_terrain_curriculum(self, env_ids):
-    #     """ Implements the game-inspired curriculum.
+    def _update_terrain_curriculum(self, env_ids):
+        """ Implements the game-inspired curriculum.
 
-    #     Args:
-    #         env_ids (List[int]): ids of environments being reset
-    #     """
-    #     # Implement Terrain curriculum
-    #     if not self.init_done:
-    #         # don't change on initial reset
-    #         return
-    #     distance = torch.norm(self.root_states[env_ids, :2] - self.env_origins[env_ids, :2], dim=1)
-    #     # robots that walked far enough progress to harder terains
-    #     move_up = distance > self.terrain.env_length / 2
-    #     # robots that walked less than half of their required distance go to simpler terrains
-    #     move_down = (distance < torch.norm(self.commands[env_ids, :2], dim=1)*self.max_episode_length_s*0.5) * ~move_up
-    #     self.terrain_levels[env_ids] += 1 * move_up - 1 * move_down
-    #     # Robots that solve the last level are sent to a random one
-    #     self.terrain_levels[env_ids] = torch.where(self.terrain_levels[env_ids]>=self.max_terrain_level,
-    #                                                torch.randint_like(self.terrain_levels[env_ids], self.max_terrain_level),
-    #                                                torch.clip(self.terrain_levels[env_ids], 0)) # (the minumum level is zero)
-    #     self.env_origins[env_ids] = self.terrain_origins[self.terrain_levels[env_ids], self.terrain_types[env_ids]]
+        Args:
+            env_ids (List[int]): ids of environments being reset
+        """
+        # Implement Terrain curriculum
+        if not self.init_done:
+            # don't change on initial reset
+            return
+        distance = torch.norm(self.base_pos[env_ids, :2] - self.env_origins[env_ids, :2], dim=1)
+        # robots that walked far enough progress to harder terains
+        move_up = distance > self.utils_terrain.env_length / 2
+        # robots that walked less than half of their required distance go to simpler terrains
+        move_down = (distance < torch.norm(self.commands[env_ids, :2], dim=1)*self.max_episode_length_s*0.5) * ~move_up
+        self.terrain_levels[env_ids] += 1 * move_up - 1 * move_down
+        # Robots that solve the last level are sent to a random one
+        self.terrain_levels[env_ids] = torch.where(self.terrain_levels[env_ids]>=self.max_terrain_level,
+                                                   torch.randint_like(self.terrain_levels[env_ids], self.max_terrain_level),
+                                                   torch.clip(self.terrain_levels[env_ids], 0)) # (the minumum level is zero)
+        self.env_origins[env_ids] = self.terrain_origins[self.terrain_levels[env_ids], self.terrain_types[env_ids]]
     
     def update_command_curriculum(self, env_ids):
         """ Implements a curriculum of increasing commands
@@ -587,27 +586,11 @@ class LeggedRobot(BaseTask):
                 pos=(-self.cfg.terrain.border_size, -self.cfg.terrain.border_size, 0.0),
                 horizontal_scale=self.cfg.terrain.horizontal_scale,
                 vertical_scale=self.cfg.terrain.vertical_scale,
-                height_field=self.utils_terrain.heightsamples,
+                height_field=self.utils_terrain.height_field_raw,
             )
         )
-        self.height_samples = torch.tensor(self.utils_terrain.heightsamples).view(
-            self.utils_terrain.tot_rows, self.utils_terrain.tot_cols).to(self.device)
-
-    # def _create_trimesh(self):
-    #     """ Adds a triangle mesh terrain to the simulation, sets parameters based on the cfg.
-    #     # """
-    #     tm_params = gymapi.TriangleMeshParams()
-    #     tm_params.nb_vertices = self.terrain.vertices.shape[0]
-    #     tm_params.nb_triangles = self.terrain.triangles.shape[0]
-
-    #     tm_params.transform.p.x = -self.terrain.cfg.border_size 
-    #     tm_params.transform.p.y = -self.terrain.cfg.border_size
-    #     tm_params.transform.p.z = 0.0
-    #     tm_params.static_friction = self.cfg.terrain.static_friction
-    #     tm_params.dynamic_friction = self.cfg.terrain.dynamic_friction
-    #     tm_params.restitution = self.cfg.terrain.restitution
-    #     self.gym.add_triangle_mesh(self.sim, self.terrain.vertices.flatten(order='C'), self.terrain.triangles.flatten(order='C'), tm_params)   
-    #     self.height_samples = torch.tensor(self.terrain.heightsamples).view(self.terrain.tot_rows, self.terrain.tot_cols).to(self.device)
+        # self.height_samples = torch.tensor(self.utils_terrain.heightsamples).view(
+        #     self.utils_terrain.tot_rows, self.utils_terrain.tot_cols).to(self.device)
 
     def _create_envs(self):
         """ Creates environments:
@@ -618,35 +601,21 @@ class LeggedRobot(BaseTask):
         asset_root = os.path.dirname(asset_path)
         asset_file = os.path.basename(asset_path)
         
-        if "urdf" in asset_file:
-            self.robot = self.scene.add_entity(
-                gs.morphs.URDF(
-                    file=os.path.join(asset_root, asset_file),
-                    merge_fixed_links = True,  # if merge_fixed_links is True, then one link may have multiple geometries, which will cause error in set_friction_ratio
-                    links_to_keep = self.cfg.asset.links_to_keep,
-                    pos= np.array(self.cfg.init_state.pos),
-                    quat=np.array(self.cfg.init_state.rot),
-                    fixed = self.cfg.asset.fix_base_link,
-                ),
-                visualize_contact=self.debug,
-                # vis_mode="collision",
-            )
-        elif "xml" in asset_file:
-            self.robot = self.scene.add_entity(
-                gs.morphs.MJCF(
-                    file=os.path.join(asset_root, asset_file),
-                    pos= np.array(self.cfg.init_state.pos),
-                    quat=np.array(self.cfg.init_state.rot),
-                ),
-                visualize_contact=self.debug,
-                vis_mode="collision"
-            )
+        self.robot = self.scene.add_entity(
+            gs.morphs.URDF(
+                file=os.path.join(asset_root, asset_file),
+                merge_fixed_links = True,  # if merge_fixed_links is True, then one link may have multiple geometries, which will cause error in set_friction_ratio
+                links_to_keep = self.cfg.asset.links_to_keep,
+                pos= np.array(self.cfg.init_state.pos),
+                quat=np.array(self.cfg.init_state.rot),
+                fixed = self.cfg.asset.fix_base_link,
+            ),
+            visualize_contact=self.debug,
+        )
         
         # build
-        self.scene.build(n_envs=self.num_envs, 
-                         env_spacing=(self.cfg.env.env_spacing, self.cfg.env.env_spacing))
+        self.scene.build(n_envs=self.num_envs)
         
-        # get env origins
         self._get_env_origins()
         
         # name to indices
@@ -738,7 +707,7 @@ class LeggedRobot(BaseTask):
         self.obs_scales = self.cfg.normalization.obs_scales
         self.reward_scales = class_to_dict(self.cfg.rewards.scales)
         self.command_ranges = class_to_dict(self.cfg.commands.ranges)
-        if self.cfg.terrain.mesh_type not in ['heightfield', 'trimesh']:
+        if self.cfg.terrain.mesh_type not in ['heightfield']:
             self.cfg.terrain.curriculum = False
         self.max_episode_length_s = self.cfg.env.episode_length_s
         self.max_episode_length = np.ceil(self.max_episode_length_s / self.dt)
