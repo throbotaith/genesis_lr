@@ -2,15 +2,36 @@
 
 A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for training legged robots in [genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main)
 
+## Table of Contents
+
+- [🦿 Legged Robotics in Genesis](#-legged-robotics-in-genesis)
+  - [Table of Contents](#table-of-contents)
+  - [Updates](#updates)
+  - [🌟 Features](#-features)
+  - [🧪 Test Results](#-test-results)
+  - [🛠 Installation](#-installation)
+  - [👋 Usage](#-usage)
+    - [🚀 Quick Start](#-quick-start)
+  - [🖼️ Gallery](#️-gallery)
+  - [Acknowledgements](#acknowledgements)
+  - [TODO](#todo)
+
 ---
 ## Updates
+
+<details open>
+<summary>2024/12/26</summary>
+
+- add terrain support, optional terrain type: ["plane", "heightfield"]. 
+- move test results to [tests.md](./test_resources/tests.md)
+
+</details>
 
 - 2024/12/24: add a new demo environment `bipedal_walker`
 
 - 2024/12/23: divide main and deploy branches, deploy branch should be used with a custom rsl_rl(which will be open-source soon)
 ---
 
-> All the tests below are conducted on a desktop with RTX 3080 10GB graphics memory.
 
 ## 🌟 Features
 
@@ -20,37 +41,13 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 
 - **Faster and Smaller**
   
-  For a go2 walking on the plane task with 4096 envs, the training speed is approximately **1.3x** compared to [Isaac Gym](https://developer.nvidia.com/isaac-gym).
-  
-  - Training speed in genesis: 
-  ![](./test_resources/genesis_rl_speed.png)
-
-  - Training speed in isaac gym: 
-  ![](./test_resources/isaacgym_speed.png)
-  
-  While the graphics memory usage is roughly **1/2** compared to IsaacGym.
-
-  - Graphics memory usage in genesis: 
-  ![](./test_resources/genesis_memory_usage.png)
-
-  - Graphics memory usage in isaac gym: 
-  ![](./test_resources/isaacgym_memory_usage.png)
+  For a go2 walking on the plane task with 4096 envs, the training speed in Genesis is approximately **1.3x** compared to [Isaac Gym](https://developer.nvidia.com/isaac-gym), while the graphics memory usage is roughly **1/2** compared to IsaacGym.
 
   With this smaller memory usage, it's possible to **run more parallel environments**, which can further improve the training speed.
 
-## 🧪 Test
+## 🧪 Test Results
 
-- Simulation
-  
-  For a go2 walking on the plane task, training a policy with 10000 envs for 600 ites(which is 144M steps) takes about 12mins. The play result is as below:
-  
-  ![](./test_resources/go2_flat_play.gif)
-
-- Real Robot
-  
-  Also for a go2 walking on the plane task, training policy+explicit estimator with 10000 envs for 1k ites takes about 23mins. Deployment result is as below:
-
-  ![](./test_resources/genesis_deploy_test.gif)
+For tests conducted on Genesis, please refer to [tests.md](./test_resources/tests.md)
 
 ## 🛠 Installation
 
@@ -110,4 +107,5 @@ Then, run `play.py` to visualize the trained model:
 
 - [x] Add domain randomization
 - [x] Verify the trained model on real robots.
-- [ ] Add Heightfield support
+- [x] Add Heightfield support
+- [ ] Add meausre_heights support
