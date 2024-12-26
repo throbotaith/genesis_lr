@@ -23,6 +23,9 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 <summary>2024/12/26</summary>
 
 - add terrain support, optional terrain type: ["plane", "heightfield"]. 
+
+  ![](./test_resources/terrain_demo.gif)
+
 - move test results to [tests.md](./test_resources/tests.md)
 
 </details>
