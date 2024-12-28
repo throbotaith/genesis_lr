@@ -6,20 +6,19 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 
 - [🦿 Legged Robotics in Genesis](#-legged-robotics-in-genesis)
   - [Table of Contents](#table-of-contents)
-  - [Updates](#updates)
-  - [](#)
+  - [📅 Updates](#-updates)
   - [🌟 Features](#-features)
   - [🧪 Test Results](#-test-results)
   - [🛠 Installation](#-installation)
   - [👋 Usage](#-usage)
     - [🚀 Quick Start](#-quick-start)
-    - [Instructions](#instructions)
+    - [📖 Instructions](#-instructions)
   - [🖼️ Gallery](#️-gallery)
-  - [Acknowledgements](#acknowledgements)
+  - [🙏 Acknowledgements](#-acknowledgements)
   - [TODO](#todo)
 
 ---
-## Updates
+## 📅 Updates
 
 <details open>
 <summary>2024/12/28</summary>
@@ -28,7 +27,7 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 
 </details>
 
-<details close>
+<details>
 <summary>2024/12/26</summary>
 
 - add terrain support, optional terrain type: ["plane", "heightfield"]. 
@@ -52,6 +51,7 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 - divide main and deploy branches, deploy branch should be used with a custom rsl_rl(which will be open-source soon)
 
 </details>
+
 ---
 
 
@@ -111,7 +111,7 @@ Then, run `play.py` to visualize the trained model:
 
 ![](./test_resources/go2_flat_play.gif)
 
-### Instructions
+### 📖 Instructions
 
 For more detailed instructions, please refer to the [wiki page](https://github.com/lupinjia/genesis_lr/wiki)
 
@@ -121,7 +121,7 @@ For more detailed instructions, please refer to the [wiki page](https://github.c
 |--- | --- |
 | ![](./test_resources/go2_flat_play.gif) | ![](./test_resources/bipedal_walker_flat.gif) |
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
 - [Genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main)
 - [Genesis-backflip](https://github.com/ziyanx02/Genesis-backflip)
