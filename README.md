@@ -7,11 +7,13 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 - [🦿 Legged Robotics in Genesis](#-legged-robotics-in-genesis)
   - [Table of Contents](#table-of-contents)
   - [Updates](#updates)
+  - [](#)
   - [🌟 Features](#-features)
   - [🧪 Test Results](#-test-results)
   - [🛠 Installation](#-installation)
   - [👋 Usage](#-usage)
     - [🚀 Quick Start](#-quick-start)
+    - [Instructions](#instructions)
   - [🖼️ Gallery](#️-gallery)
   - [Acknowledgements](#acknowledgements)
   - [TODO](#todo)
@@ -20,6 +22,13 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 ## Updates
 
 <details open>
+<summary>2024/12/28</summary>
+
+- add [wiki page](https://github.com/lupinjia/genesis_lr/wiki) for instructions
+
+</details>
+
+<details close>
 <summary>2024/12/26</summary>
 
 - add terrain support, optional terrain type: ["plane", "heightfield"]. 
@@ -30,9 +39,19 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 
 </details>
 
-- 2024/12/24: add a new demo environment `bipedal_walker`
+<details>
+<summary>2024/12/24</summary>
 
-- 2024/12/23: divide main and deploy branches, deploy branch should be used with a custom rsl_rl(which will be open-source soon)
+- add a new demo environment `bipedal_walker`
+
+</details>
+
+<details>
+<summary>2024/12/23</summary>
+
+- divide main and deploy branches, deploy branch should be used with a custom rsl_rl(which will be open-source soon)
+
+</details>
 ---
 
 
@@ -91,6 +110,10 @@ After the training is done, paste the `run_name` under `logs/go2` to `load_run` 
 Then, run `play.py` to visualize the trained model:
 
 ![](./test_resources/go2_flat_play.gif)
+
+### Instructions
+
+For more detailed instructions, please refer to the [wiki page](https://github.com/lupinjia/genesis_lr/wiki)
 
 ## 🖼️ Gallery
 
