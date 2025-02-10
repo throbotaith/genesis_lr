@@ -99,7 +99,10 @@ class Terrain:
                                 vertical_scale=self.cfg.vertical_scale,
                                 horizontal_scale=self.cfg.horizontal_scale)
                 
-                terrain = terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.3, step_height=0.05, platform_size=3.)
+                # terrain = terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.4, step_height=0.1, platform_size=3.)
+                # terrain_utils.pyramid_sloped_terrain(terrain, slope=0.4, platform_size=3.)
+                # terrain = terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005, downsampled_scale=0.2)
+                terrain_utils.discrete_obstacles_terrain(terrain, 0.1, 1.0, 2.0, 20, platform_size=3.)
                 self.add_terrain_to_map(terrain, i, j)
     
     def make_terrain(self, choice, difficulty):
@@ -125,7 +128,7 @@ class Terrain:
         elif choice < self.proportions[3]:
             if choice<self.proportions[2]:
                 step_height *= -1
-            terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height, platform_size=3.)
+            terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.4, step_height=step_height, platform_size=3.)
         elif choice < self.proportions[4]:
             num_rectangles = 20
             rectangle_min_size = 1.

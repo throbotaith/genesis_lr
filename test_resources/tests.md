@@ -40,6 +40,8 @@ With this smaller memory usage, it's possible to **run more parallel environment
 
 **embedded terrain can't specify difficulty, not practical to use.**
 
+num_envs = 8192, border_size=5.0, terrain_width=6.0, terrain_length=6.0, num_rows=8, num_cols=8 -> CUDA out of memory
+
 ### Time Test
 
 Compilation takes **2min 45s**, with the below params:
@@ -60,3 +62,33 @@ Compilation takes **2min 45s**, with the below params:
 for headless=True with other params the same, it takes **2min 30s**.
 
 Maybe because that Genesis needs to first compile then execute, it speeds less graphics memory but takes longer time to compile.
+
+For a more practical case(parameters as below), the compilation takes **1min 17s**, and the **iteration time** during training is **1.3s** on average. And the graphics memory used is 4500MB. 
+
+| Parameter | Value |
+| --- | --- |
+| task | go2_rough |
+| headless | True |
+| num_envs | 5000 |
+| horizontal_scale | 0.2 |
+| vertical_scale | 0.005 |
+| terrain_length | 6.0 |
+| terrain_width | 6.0 |
+| border_size | 15.0 |
+| num_rows | 6 |
+| num_cols | 5 |
+
+For the below parameters, the compilation takes more than 10min, it's too slow. Turn horizontal_scale to 0.2, 
+
+| Parameter | Value |
+| --- | --- |
+| task | go2_rough |
+| headless | True |
+| num_envs | 4096 |
+| horizontal_scale | 0.1 |
+| vertical_scale | 0.005 |
+| terrain_length | 6.0 |
+| terrain_width | 6.0 |
+| border_size | 25.0 |
+| num_rows | 6 |
+| num_cols | 5 |
