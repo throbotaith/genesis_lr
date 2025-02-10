@@ -11,9 +11,9 @@ class GO2RoughCfg( LeggedRobotCfg ):
     
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = "heightfield" # none, plane, heightfield or trimesh
-        horizontal_scale = 0.2 # [m]
+        horizontal_scale = 0.2 # [m]. if use smaller horizontal scale, need to decrease terrain_length and terrain_width, or it will compile very slowly.
         vertical_scale = 0.005 # [m]
-        border_size = 5 # [m]
+        border_size = 5 # [m]. implemented a out_of_bound detection, so border_size can be smaller
         curriculum = True
         friction = 1.0
         restitution = 0.
@@ -28,7 +28,7 @@ class GO2RoughCfg( LeggedRobotCfg ):
         max_init_terrain_level = 1 # starting curriculum state
         terrain_length = 6.0 # 
         terrain_width = 6.0  # 
-        num_rows = 6  # number of terrain rows (levels)
+        num_rows = 8  # number of terrain rows (levels)
         num_cols = 5  # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
         terrain_proportions = [0.2, 0.2, 0.2, 0.2, 0.2]
@@ -38,15 +38,15 @@ class GO2RoughCfg( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
         pos = [0.0, 0.0, 0.42] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
-            'FL_hip_joint': 0.1,   # [rad]
-            'RL_hip_joint': 0.1,   # [rad]
-            'FR_hip_joint': -0.1 ,  # [rad]
-            'RR_hip_joint': -0.1,   # [rad]
+            'FL_hip_joint': 0.0,   # [rad]
+            'RL_hip_joint': 0.0,   # [rad]
+            'FR_hip_joint': 0.0 ,  # [rad]
+            'RR_hip_joint': 0.0,   # [rad]
 
             'FL_thigh_joint': 0.8,     # [rad]
-            'RL_thigh_joint': 1.,   # [rad]
+            'RL_thigh_joint': 0.8,   # [rad]
             'FR_thigh_joint': 0.8,     # [rad]
-            'RR_thigh_joint': 1.,   # [rad]
+            'RR_thigh_joint': 0.8,   # [rad]
 
             'FL_calf_joint': -1.5,   # [rad]
             'RL_calf_joint': -1.5,    # [rad]
@@ -100,14 +100,14 @@ class GO2RoughCfg( LeggedRobotCfg ):
             lin_vel_z = -2.0
             base_height = -1.0
             ang_vel_xy = -0.05
-            orientation = -3.0
+            orientation = -1.0
             dof_vel = -5.e-4
             dof_acc = -2.e-7
             action_rate = -0.01
             torques = -2.e-4
             # gait
             feet_air_time = 1.0
-            dof_close_to_default = -0.1
+            # dof_close_to_default = -0.05
     
     class commands( LeggedRobotCfg.commands ):
         curriculum = True
@@ -138,7 +138,7 @@ class GO2RoughCfg( LeggedRobotCfg ):
         ref_env = 0
         pos = [10, 0, 6]       # [m]
         lookat = [11., 5, 3.]  # [m]
-        num_rendered_envs = 10  # number of environments to be rendered
+        num_rendered_envs = 4  # number of environments to be rendered
         add_camera = False
 
 class GO2RoughCfgPPO( LeggedRobotCfgPPO ):
@@ -148,6 +148,6 @@ class GO2RoughCfgPPO( LeggedRobotCfgPPO ):
         run_name = ''
         experiment_name = 'go2_rough'
         save_interval = 100
-        load_run = "Feb10_15-18-34_"
+        load_run = "Feb10_18-54-11_"
         checkpoint = -1
         max_iterations = 2500
