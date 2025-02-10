@@ -19,7 +19,6 @@ def play(args):
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 10)
     env_cfg.env.debug_viz = True
     env_cfg.viewer.add_camera = True  # use a extra camera for moving
-    env_cfg.viewer.num_rendered_envs = 10
     env_cfg.terrain.border_size = 5
     env_cfg.terrain.num_rows = 2
     env_cfg.terrain.num_cols = 5
@@ -33,10 +32,10 @@ def play(args):
     # initial state randomization
     env_cfg.init_state.yaw_angle_range = [0., 0.]
     # velocity range
-    # env_cfg.commands.ranges.lin_vel_x = [0.5, 1.0]
-    # env_cfg.commands.ranges.lin_vel_y = [0., 0.]
-    # env_cfg.commands.ranges.ang_vel_yaw = [0., 0.]
-    # env_cfg.commands.ranges.heading = [0, 0]
+    env_cfg.commands.ranges.lin_vel_x = [0.5, 1.0]
+    env_cfg.commands.ranges.lin_vel_y = [0., 0.]
+    env_cfg.commands.ranges.ang_vel_yaw = [0., 0.]
+    env_cfg.commands.ranges.heading = [0, 0]
 
     # prepare environment
     env, _ = task_registry.make_env(name=args.task, args=args, env_cfg=env_cfg)
@@ -122,7 +121,7 @@ def play(args):
 
 if __name__ == '__main__':
     EXPORT_POLICY = False
-    RECORD_FRAMES = True  # only record frames in extra camera view
+    RECORD_FRAMES = False  # only record frames in extra camera view
     MOVE_CAMERA   = False
     FOLLOW_ROBOT  = True
     assert not (MOVE_CAMERA and FOLLOW_ROBOT), "Cannot move camera and follow robot at the same time"

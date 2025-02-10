@@ -50,12 +50,12 @@ class LeggedRobot(BaseTask):
         clip_actions = self.cfg.normalization.clip_actions
         self.actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
         exec_actions = self.last_actions if self.simulate_action_latency else self.actions
-        if self.cfg.sim.use_implicit_controller:
+        if self.cfg.sim.use_implicit_controller: # use embedded pd controller
             target_dof_pos = self._compute_target_dof_pos(exec_actions)
             self.robot.control_dofs_position(target_dof_pos, self.motor_dofs)
             self.scene.step()
         else:
-            for _ in range(self.cfg.control.decimation):
+            for _ in range(self.cfg.control.decimation): # use self-implemented pd controller
                 self.torques = self._compute_torques(exec_actions)
                 if self.num_build_envs == 0:
                     torques = self.torques.squeeze()
@@ -102,8 +102,7 @@ class LeggedRobot(BaseTask):
         self._post_physics_step_callback()
 
         # compute observations, rewards, resets, ...
-        if self.cfg.terrain.mesh_type == "heightfield":
-            self.check_base_pos_out_of_bound()
+        self.check_base_pos_out_of_bound()
         self.check_termination()
         self.compute_reward()
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
@@ -258,7 +257,7 @@ class LeggedRobot(BaseTask):
                 camera_lookat=(0.0, 0.0, 0.5),
                 camera_fov=40,
             ),
-            vis_options=gs.options.VisOptions(n_rendered_envs=self.cfg.viewer.num_rendered_envs),
+            vis_options=gs.options.VisOptions(n_rendered_envs=min(self.cfg.viewer.num_rendered_envs, self.num_envs)),
             rigid_options=gs.options.RigidOptions(
                 dt=self.sim_dt,
                 constraint_solver=gs.constraint_solver.Newton,
@@ -279,7 +278,7 @@ class LeggedRobot(BaseTask):
             self._setup_camera()
         
         # add terrain
-        mesh_type = self.cfg.terrain.mesh_type # only plane for now
+        mesh_type = self.cfg.terrain.mesh_type
         if mesh_type=='plane':
             self.terrain = self.scene.add_entity(gs.morphs.URDF(file="urdf/plane/plane.urdf", fixed=True))
         elif mesh_type=='heightfield':
@@ -288,6 +287,20 @@ class LeggedRobot(BaseTask):
         elif mesh_type is not None:
             raise ValueError("Terrain mesh type not recognised. Allowed types are [None, plane, heightfield, trimesh]")
         self.terrain.set_friction(self.cfg.terrain.friction)
+        # specify the boundary of the heightfield
+        self.terrain_x_range = torch.zeros(2, device=self.device)
+        self.terrain_y_range = torch.zeros(2, device=self.device)
+        if self.cfg.terrain.mesh_type=='heightfield':
+            self.terrain_x_range[0] = -self.cfg.terrain.border_size + 1.0 # give a small margin(1.0m)
+            self.terrain_x_range[1] = self.cfg.terrain.border_size + self.cfg.terrain.num_rows * self.cfg.terrain.terrain_length - 1.0
+            self.terrain_y_range[0] = -self.cfg.terrain.border_size + 1.0
+            self.terrain_y_range[1] = self.cfg.terrain.border_size + self.cfg.terrain.num_cols * self.cfg.terrain.terrain_width - 1.0
+        elif self.cfg.terrain.mesh_type=='plane': # the plane used has limited size, 
+                                                  # and the origin of the world is at the center of the plane
+            self.terrain_x_range[0] = -self.cfg.terrain.plane_length/2+1
+            self.terrain_x_range[1] = self.cfg.terrain.plane_length/2-1
+            self.terrain_y_range[0] = -self.cfg.terrain.plane_length/2+1 # the plane is a square
+            self.terrain_y_range[1] = self.cfg.terrain.plane_length/2-1
         self._create_envs()
     
     def set_camera(self, pos, lookat):
@@ -607,13 +620,6 @@ class LeggedRobot(BaseTask):
         )
         self.height_samples = torch.tensor(self.utils_terrain.heightsamples).view(
             self.utils_terrain.tot_rows, self.utils_terrain.tot_cols).to(self.device)
-        # specify the boundary of the heightfield
-        self.terrain_x_range = torch.zeros(2, device=self.device)
-        self.terrain_y_range = torch.zeros(2, device=self.device)
-        self.terrain_x_range[0] = -self.cfg.terrain.border_size + 1.0 # give a small margin(1.0m)
-        self.terrain_x_range[1] = self.cfg.terrain.border_size + self.cfg.terrain.num_rows * self.cfg.terrain.terrain_length - 1.0
-        self.terrain_y_range[0] = -self.cfg.terrain.border_size + 1.0
-        self.terrain_y_range[1] = self.cfg.terrain.border_size + self.cfg.terrain.num_cols * self.cfg.terrain.terrain_width - 1.0
 
     def _create_envs(self):
         """ Creates environments:
@@ -778,10 +784,14 @@ class LeggedRobot(BaseTask):
             num_cols = np.floor(np.sqrt(self.num_envs))
             num_rows = np.ceil(self.num_envs / num_cols)
             xx, yy = torch.meshgrid(torch.arange(num_rows), torch.arange(num_cols))
-            spacing = self.cfg.env.env_spacing
+            # plane has limited size, we need to specify spacing base on num_envs, to make sure all robots are within the plane
+            # restrict envs to a square of [plane_length/2, plane_length/2]
+            spacing = min((self.cfg.terrain.plane_length / 2) / (num_rows-1), (self.cfg.terrain.plane_length / 2) / (num_cols-1))
             self.env_origins[:, 0] = spacing * xx.flatten()[:self.num_envs]
             self.env_origins[:, 1] = spacing * yy.flatten()[:self.num_envs]
             self.env_origins[:, 2] = 0.
+            self.env_origins[:, 0] -= self.cfg.terrain.plane_length / 4
+            self.env_origins[:, 1] -= self.cfg.terrain.plane_length / 4
     
     def _init_height_points(self):
         """ Returns points at which the height measurments are sampled (in base frame)
@@ -853,7 +863,8 @@ class LeggedRobot(BaseTask):
     def _reward_base_height(self):
         # Penalize base height away from target
         base_height = torch.mean(self.base_pos[:, 2].unsqueeze(1) - self.measured_heights, dim=1)
-        return torch.square(base_height - self.cfg.rewards.base_height_target)
+        rew = torch.square(base_height - self.cfg.rewards.base_height_target)
+        return rew
     
     def _reward_torques(self):
         # Penalize torques

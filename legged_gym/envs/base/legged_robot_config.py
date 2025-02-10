@@ -6,14 +6,14 @@ class LeggedRobotCfg(BaseConfig):
         num_observations = 48
         num_privileged_obs = None # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise 
         num_actions = 12
-        env_spacing = 3.  # not used with heightfields/trimeshes 
         send_timeouts = True # send time out information to the algorithm
         episode_length_s = 20 # episode length in seconds
         debug = False # if debugging, visualize contacts, 
         debug_viz = False # draw debug visualizations
 
     class terrain:
-        mesh_type = 'plane' # "heightfield" # none, plane, heightfield or trimesh
+        mesh_type = 'plane' # "heightfield" # none, plane, heightfield
+        plane_length = 200.0 # [m]. plane size is 200x200x10 by default
         horizontal_scale = 0.1 # [m]
         vertical_scale = 0.005 # [m]
         border_size = 5 # [m]

@@ -6,7 +6,6 @@ class GO2Cfg( LeggedRobotCfg ):
         num_envs = 10000
         num_observations = 48
         num_actions = 12
-        env_spacing = 3.  # not used with heightfields/trimeshes
     
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = "plane" # none, plane, heightfield
@@ -85,7 +84,7 @@ class GO2Cfg( LeggedRobotCfg ):
             torques = -2.e-4
             # gait
             feet_air_time = 1.0
-            dof_close_to_default = -0.1
+            # dof_close_to_default = -0.1
     
     class commands( LeggedRobotCfg.commands ):
         curriculum = True
@@ -116,7 +115,7 @@ class GO2Cfg( LeggedRobotCfg ):
         ref_env = 0
         pos = [10, 0, 6]       # [m]
         lookat = [11., 5, 3.]  # [m]
-        num_rendered_envs = 100  # number of environments to be rendered
+        num_rendered_envs = 10  # number of environments to be rendered
         add_camera = False
 
 class GO2CfgPPO( LeggedRobotCfgPPO ):
@@ -126,6 +125,6 @@ class GO2CfgPPO( LeggedRobotCfgPPO ):
         run_name = ''
         experiment_name = 'go2'
         save_interval = 100
-        load_run = "Dec22_13-55-49_"
+        load_run = "Feb10_21-29-29_"
         checkpoint = -1
         max_iterations = 600

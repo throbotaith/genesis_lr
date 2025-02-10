@@ -18,28 +18,6 @@ from legged_gym.utils.gs_utils import *
 from .go2_config import GO2Cfg
 
 class GO2(LeggedRobot):
-    def __init__(self, cfg: GO2Cfg, sim_device, headless):
-        """ Parses the provided config file,
-            calls create_sim() (which creates, simulation, terrain and environments),
-            initilizes pytorch buffers used during training
-
-        Args:
-            cfg (Dict): Environment config file
-            device_type (string): 'cuda' or 'cpu'
-            device_id (int): 0, 1, ...
-            headless (bool): Run without rendering if True
-        """
-        self.cfg = cfg
-        self.height_samples = None
-        self.debug_viz = self.cfg.env.debug_viz
-        self.init_done = False
-        self._parse_cfg(self.cfg)
-        super().__init__(self.cfg, sim_device, headless)
-
-        self._init_buffers()
-        self._prepare_reward_function()
-        self.init_done = True
-    
     def _reset_dofs(self, envs_idx):
         """ Resets DOF position and velocities of selected environmments
         Positions are randomly selected within 0.5:1.5 x default positions.
