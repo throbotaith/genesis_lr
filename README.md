@@ -23,7 +23,7 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 <details open>
 <summary>2025/02/10</summary>
 
-- add measure_heights support, and provide a demo of exteroceptive locomotion (go2_rough)
+- add measure_heights support, and provide a demo of exteroceptive locomotion ([go2_rough](https://github.com/lupinjia/genesis_lr/tree/main/legged_gym/envs/go2/go2_rough))
 
 ![](./test_resources//go2_rough_demo.gif)
 
@@ -143,4 +143,6 @@ For more detailed instructions, please refer to the [wiki page](https://github.c
 - [x] Add domain randomization
 - [x] Verify the trained model on real robots.
 - [x] Add Heightfield support
-- [ ] Add meausre_heights support
+- [x] Add meausre_heights support
+- [ ] Add go2 deploy demos and instructions (vanilla and explicit estimator)
+- [ ] Add teacher-student implementation
