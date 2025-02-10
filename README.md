@@ -21,6 +21,15 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 ## 📅 Updates
 
 <details open>
+<summary>2025/02/10</summary>
+
+- add measure_heights support, and provide a demo of exteroceptive locomotion (go2_rough)
+
+![](./test_resources//go2_rough_demo.gif)
+
+</details>
+
+<details>
 <summary>2024/12/28</summary>
 
 - add [wiki page](https://github.com/lupinjia/genesis_lr/wiki) for instructions

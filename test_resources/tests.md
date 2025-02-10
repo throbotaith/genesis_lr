@@ -42,6 +42,11 @@ With this smaller memory usage, it's possible to **run more parallel environment
 
 num_envs = 8192, border_size=5.0, terrain_width=6.0, terrain_length=6.0, num_rows=8, num_cols=8 -> CUDA out of memory
 
+### Quick Tips
+
+1. Use bigger horizontal_scale unless you need more precise height points. Bigger horizontal_scale can reduce the number of heightfield points, which can help shorten the compilation time.
+2. Use smaller terrain_length and terrain_width if you need to use smaller horizontal_scale.
+
 ### Time Test
 
 Compilation takes **2min 45s**, with the below params:
@@ -78,7 +83,7 @@ For a more practical case(parameters as below), the compilation takes **1min 17s
 | num_rows | 6 |
 | num_cols | 5 |
 
-For the below parameters, the compilation takes more than 10min, it's too slow. Turn horizontal_scale to 0.2, 
+For the below parameters, the compilation takes more than 10min, it's too slow. 
 
 | Parameter | Value |
 | --- | --- |

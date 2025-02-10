@@ -19,11 +19,12 @@ def play(args):
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 10)
     env_cfg.env.debug_viz = True
     env_cfg.viewer.add_camera = True  # use a extra camera for moving
+    env_cfg.viewer.num_rendered_envs = 10
     env_cfg.terrain.border_size = 5
-    env_cfg.terrain.num_rows = 1
-    env_cfg.terrain.num_cols = 1
-    env_cfg.terrain.curriculum = False
-    env_cfg.terrain.selected = True
+    env_cfg.terrain.num_rows = 2
+    env_cfg.terrain.num_cols = 5
+    env_cfg.terrain.curriculum = True
+    env_cfg.terrain.selected = False
     env_cfg.noise.add_noise = True
     env_cfg.domain_rand.randomize_friction = False
     env_cfg.domain_rand.push_robots = False
@@ -85,8 +86,8 @@ def play(args):
             env.set_camera(camera_position_follow, camera_lookat_follow)
             env.floating_camera.render()
         if RECORD_FRAMES and i == stop_record:
-            env.floating_camera.stop_recording(save_to_filename="bipedal_walker_flat.mp4", fps=30)
-            print("Saved recording to " + "bipedal_walker_flat.mp4")
+            env.floating_camera.stop_recording(save_to_filename="go2_rough_demo.mp4", fps=30)
+            print("Saved recording to " + "go2_rough_demo.mp4")
         
         # print debug info
         # print("base lin vel: ", env.base_lin_vel[robot_index, :].cpu().numpy())
@@ -121,9 +122,9 @@ def play(args):
 
 if __name__ == '__main__':
     EXPORT_POLICY = False
-    RECORD_FRAMES = False  # only record frames in extra camera view
+    RECORD_FRAMES = True  # only record frames in extra camera view
     MOVE_CAMERA   = False
-    FOLLOW_ROBOT  = False
+    FOLLOW_ROBOT  = True
     assert not (MOVE_CAMERA and FOLLOW_ROBOT), "Cannot move camera and follow robot at the same time"
     args = get_args()
     play(args)
