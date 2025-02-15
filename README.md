@@ -89,7 +89,7 @@ For tests conducted on Genesis, please refer to [tests.md](./test_resources/test
    ```bash
    # Install rsl_rl.
    git clone https://github.com/leggedrobotics/rsl_rl
-   cd rsl_rl && git checkout v1.0.2 && pip install -e .
+   cd rsl_rl && git checkout v1.0.2 && pip install -e . --use-pep517
 
    # Install tensorboard.
    pip install tensorboard
