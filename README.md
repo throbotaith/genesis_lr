@@ -21,6 +21,15 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 ## 📅 Updates
 
 <details open>
+<summary>2025/02/23</summary>
+
+- find some bugs in genesis. The environments can return nan values without knowing why (https://github.com/Genesis-Embodied-AI/Genesis/issues/625), which can hinder long-time training where nan values may suddenly come out and terminates your training.
+
+  ![](./test_resources/nan_values_bug.png)
+
+</details>
+
+<details>
 <summary>2025/02/10</summary>
 
 - add measure_heights support, and provide a demo of exteroceptive locomotion ([go2_rough](https://github.com/lupinjia/genesis_lr/tree/main/legged_gym/envs/go2/go2_rough))
