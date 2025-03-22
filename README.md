@@ -20,7 +20,14 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 ---
 ## 📅 Updates
 
-<details open>
+<details>
+<summary>2025/03/22</summary>
+
+- I created a [new repo based on legged_gym](https://github.com/lupinjia/legged_gym_ext), containing custom implementation of some RL control papers.
+
+</details>
+
+<details>
 <summary>2025/02/23</summary>
 
 - find some bugs in genesis. The environments can return nan values without knowing why (https://github.com/Genesis-Embodied-AI/Genesis/issues/625), which can hinder long-time training where nan values may suddenly come out and terminates your training.
