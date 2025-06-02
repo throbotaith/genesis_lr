@@ -98,13 +98,13 @@ For tests conducted on Genesis, please refer to [tests.md](./test_resources/test
 
 ## 🛠 Installation
 
-1. Create a new python virtual env with python>=3.9
+1. Create a new python virtual env with python>=3.10
 2. Install [PyTorch](https://pytorch.org/)
 3. Install Genesis following the instructions in the [Genesis repo](https://github.com/Genesis-Embodied-AI/Genesis)
 4. Install rsl_rl and tensorboard
    ```bash
    # Install rsl_rl.
-   git clone https://github.com/leggedrobotics/rsl_rl
+   git clone git@github.com:leggedrobotics/rsl_rl.git
    cd rsl_rl && git checkout v1.0.2 && pip install -e . --use-pep517
 
    # Install tensorboard.
@@ -112,7 +112,7 @@ For tests conducted on Genesis, please refer to [tests.md](./test_resources/test
    ```
 5. Install genesis_lr
    ```bash
-   git clone https://github.com/lupinjia/genesis_lr
+   git clone git@github.com:lupinjia/genesis_lr.git
    cd genesis_lr
    pip install -e .
    ```
@@ -121,7 +121,7 @@ For tests conducted on Genesis, please refer to [tests.md](./test_resources/test
 
 ### 🚀 Quick Start
 
-By default, the task is set to `go2`(in `utils/helper.py`), we can run a training session with the following command:
+By default, the task is set to `go2`(in `utils/helpers.py`), we can run a training session with the following command:
 
 ```bash
 cd legged_gym/scripts

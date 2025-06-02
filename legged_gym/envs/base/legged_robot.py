@@ -1,6 +1,7 @@
 import genesis as gs
 from genesis.utils.geom import quat_to_xyz, transform_by_quat, inv_quat, transform_quat_by_quat
 from genesis.engine.solvers.rigid.rigid_solver_decomp import RigidSolver
+from genesis.engine.solvers.avatar_solver import AvatarSolver
 from legged_gym import LEGGED_GYM_ROOT_DIR, envs
 from time import time
 import numpy as np
@@ -257,7 +258,7 @@ class LeggedRobot(BaseTask):
                 camera_lookat=(0.0, 0.0, 0.5),
                 camera_fov=40,
             ),
-            vis_options=gs.options.VisOptions(n_rendered_envs=min(self.cfg.viewer.num_rendered_envs, self.num_envs)),
+            vis_options=gs.options.VisOptions(rendered_envs_idx = list(range(min(self.cfg.viewer.num_rendered_envs, self.num_envs)))),
             rigid_options=gs.options.RigidOptions(
                 dt=self.sim_dt,
                 constraint_solver=gs.constraint_solver.Newton,
@@ -270,6 +271,8 @@ class LeggedRobot(BaseTask):
         # query rigid solver
         for solver in self.scene.sim.solvers:
             if not isinstance(solver, RigidSolver):
+                continue
+            elif isinstance(solver, AvatarSolver):
                 continue
             self.rigid_solver = solver
             
