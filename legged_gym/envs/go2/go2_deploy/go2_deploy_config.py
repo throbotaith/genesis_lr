@@ -3,15 +3,16 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 class GO2DeployCfg( LeggedRobotCfg ):
     
     class env( LeggedRobotCfg.env ):
-        num_envs = 10000
+        num_envs = 4096
         env_spacing = 3.  # not used with heightfields/trimeshes
         num_actions = 12
-        # for OnPolicyRunnerEE
-        num_estimator_input = 129
-        num_estimator_output = 7
-        num_actor_obs = num_estimator_input + num_estimator_output
-        num_critic_obs = num_actor_obs
-        num_privileged_obs = num_critic_obs # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise 
+        # observation history
+        frame_stack = 5   # policy frame stack
+        c_frame_stack = 3 # critic frame stack
+        num_single_obs = 45
+        num_observations = int( num_single_obs * frame_stack )
+        single_num_privileged_obs = 55
+        num_privileged_obs = int( c_frame_stack * single_num_privileged_obs )
     
     class terrain( LeggedRobotCfg.terrain ):
         mesh_type = 'plane' # "heightfield" # none, plane, heightfield or trimesh
@@ -126,7 +127,7 @@ class GO2DeployCfg( LeggedRobotCfg ):
 
 class GO2DeployCfgPPO( LeggedRobotCfgPPO ):
     seed = 0
-    runner_class_name = "OnPolicyRunnerEE"
+    runner_class_name = "OnPolicyRunner"
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
     class runner( LeggedRobotCfgPPO.runner ):
@@ -136,16 +137,3 @@ class GO2DeployCfgPPO( LeggedRobotCfgPPO ):
         load_run = "Dec22_21-05-25_"
         checkpoint = 1000
         max_iterations = 3000
-    class estimator():
-        hidden_dims = [256, 128]
-        activation = 'elu' # can be elu, relu, selu, crelu, lrelu, tanh, sigmoid
-        num_mini_batches = 4 # mini batch size = num_envs*nsteps / nminibatches
-        max_epochs = 5
-        lr = 1.e-4
-    
-    class estimator_lr_scheduler():
-        type = None # could be LinearLR, StepLR
-        # for LinearLR(https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LinearLR.html)
-        start_factor = 1.0
-        end_factor = 0.1
-        total_iters = 1000
