@@ -83,8 +83,13 @@ class MiniPupperMazeEnv(gym.Env):
 
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
-        self.robot.set_pos((0.0, 0.0, 0.24))
-        self.robot.set_quat((1.0, 0.0, 0.0, 0.0))
+        # the scene is built with ``n_envs=1`` which means all API calls expect
+        # batched tensors. ``set_pos`` and ``set_quat`` therefore require a
+        # 2D tensor even for a single environment.
+        self.robot.set_pos(torch.tensor([[0.0, 0.0, 0.24]], dtype=torch.float32))
+        self.robot.set_quat(
+            torch.tensor([[1.0, 0.0, 0.0, 0.0]], dtype=torch.float32)
+        )
         self.step_count = 0
         self._update_camera()
         return self._get_obs(), {}
@@ -92,15 +97,19 @@ class MiniPupperMazeEnv(gym.Env):
     def step(self, action):
         # simple discrete control using base velocity
         if action == 0:
-            vel = (0.3, 0.0, 0.0)
+            lin = (0.3, 0.0, 0.0)
             yaw = 0.0
         elif action == 1:
-            vel = (0.0, 0.0, 0.0)
+            lin = (0.0, 0.0, 0.0)
             yaw = 1.0
         else:
-            vel = (0.0, 0.0, 0.0)
+            lin = (0.0, 0.0, 0.0)
             yaw = -1.0
-        self.robot.set_base_velocity(linear=vel, angular=(0.0, 0.0, yaw))
+
+        # similar to ``set_pos``, batched tensors are required
+        vel = torch.tensor([lin], dtype=torch.float32)
+        ang = torch.tensor([[0.0, 0.0, yaw]], dtype=torch.float32)
+        self.robot.set_base_velocity(linear=vel, angular=ang)
 
         self.scene.step()
         self._update_camera()
