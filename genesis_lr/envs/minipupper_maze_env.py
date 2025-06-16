@@ -113,7 +113,8 @@ class MiniPupperMazeEnv(gym.Env):
         # similar to ``set_pos``, batched tensors are required
         vel = torch.tensor([lin], dtype=torch.float32)
         ang = torch.tensor([[0.0, 0.0, yaw]], dtype=torch.float32)
-        self.robot.set_base_velocity(linear=vel, angular=ang)
+        dofs_vel = torch.concat([vel, ang], dim=1)
+        self.robot.set_dofs_velocity(velocity=dofs_vel, dofs_idx_local=[0, 1, 2, 3, 4, 5])
 
         self.scene.step()
         self._update_camera()
