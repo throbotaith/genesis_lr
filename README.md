@@ -13,6 +13,7 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
   - [👋 Usage](#-usage)
     - [🚀 Quick Start](#-quick-start)
     - [📖 Instructions](#-instructions)
+  - [🐳 Docker](#-docker)
   - [🖼️ Gallery](#️-gallery)
   - [🙏 Acknowledgements](#-acknowledgements)
   - [TODO](#todo)
@@ -149,6 +150,22 @@ This uses PPO with a CNN policy on the 64x64 RGB camera stream.
 ### 📖 Instructions
 
 For more detailed instructions, please refer to the [wiki page](https://github.com/lupinjia/genesis_lr/wiki)
+
+## 🐳 Docker
+
+Build the Docker image with:
+
+```bash
+docker build -t genesis-lr .
+```
+
+Run a container and start a training session:
+
+```bash
+docker run --gpus all -it genesis-lr bash
+cd legged_gym/scripts
+python train.py --headless
+```
 
 ## 🖼️ Gallery
 
