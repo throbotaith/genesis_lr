@@ -43,7 +43,6 @@ class MiniPupperMazeEnv(gym.Env):
             fov=90,
             GUI=False,
         )
-        self._update_camera()
 
         # build a simple maze with two walls
         h = 0.2
@@ -51,6 +50,10 @@ class MiniPupperMazeEnv(gym.Env):
         l = 4.0
         self.scene.add_entity(gs.morphs.Box(size=(l, w, h), pos=(1.0, 0.5, h/2), fixed=True))
         self.scene.add_entity(gs.morphs.Box(size=(l, w, h), pos=(1.0, -0.5, h/2), fixed=True))
+
+        self.scene.build(n_envs=1)
+        self._update_camera()
+
         self.goal_pos = np.array([2.0, 0.0])
 
         self.action_space = spaces.Discrete(3)
