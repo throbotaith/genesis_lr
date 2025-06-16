@@ -3,6 +3,7 @@ from pathlib import Path
 import gym
 from gym import spaces
 import numpy as np
+import torch
 import genesis as gs
 
 class MiniPupperMazeEnv(gym.Env):
@@ -63,6 +64,10 @@ class MiniPupperMazeEnv(gym.Env):
     def _update_camera(self):
         pos = self.robot.get_pos()
         quat = self.robot.get_quat()
+        if isinstance(pos, torch.Tensor):
+            pos = pos.cpu().numpy()
+        if isinstance(quat, torch.Tensor):
+            quat = quat.cpu().numpy()
         offset = gs.transform_by_quat(np.array([0.2, 0.0, 0.15]), quat)
         look = gs.transform_by_quat(np.array([1.0, 0.0, 0.15]), quat)
         self.camera.set_pose(pos=pos + offset, lookat=pos + look)
