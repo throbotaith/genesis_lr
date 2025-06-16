@@ -68,6 +68,10 @@ class MiniPupperMazeEnv(gym.Env):
             pos = pos.cpu().numpy()
         if isinstance(quat, torch.Tensor):
             quat = quat.cpu().numpy()
+        if pos.ndim > 1:
+            pos = pos[0]
+        if quat.ndim > 1:
+            quat = quat[0]
         offset = gs.transform_by_quat(np.array([0.2, 0.0, 0.15]), quat)
         look = gs.transform_by_quat(np.array([1.0, 0.0, 0.15]), quat)
         self.camera.set_pose(pos=pos + offset, lookat=pos + look)
