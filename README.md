@@ -136,6 +136,16 @@ Then, run `play.py` to visualize the trained model:
 
 ![](./test_resources/go2_flat_play.gif)
 
+### Mini Pupper Maze Example
+
+To train the maze navigation policy with image observations:
+
+```bash
+python train.py --env minipupper_maze_env --headless --timesteps 50000
+```
+
+This uses PPO with a CNN policy on the 64x64 RGB camera stream.
+
 ### 📖 Instructions
 
 For more detailed instructions, please refer to the [wiki page](https://github.com/lupinjia/genesis_lr/wiki)
