@@ -145,7 +145,12 @@ To train the maze navigation policy with image observations:
 python train.py --env minipupper_maze_env --headless --timesteps 50000
 ```
 
-This uses PPO with a CNN policy on the 64x64 RGB camera stream.
+This uses PPO with a CNN policy on the 64x64 RGB camera stream.  If you want to
+see the Genesis viewer, simply drop the `--headless` flag:
+
+```bash
+python train.py --env minipupper_maze_env --timesteps 50000
+```
 
 ### 📖 Instructions
 
@@ -165,6 +170,23 @@ Run a container and start a training session:
 docker run --gpus all -it genesis-lr bash
 cd legged_gym/scripts
 python train.py --headless
+```
+
+### Mini Pupper 2 RL with GUI
+
+To view the Genesis viewer, allow the container to use your X11 display and run
+the training without the `--headless` flag:
+
+```bash
+# on the host
+xhost +local:root
+docker run --gpus all -it \
+  --env DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  genesis-lr bash
+
+# inside the container
+python train.py --env minipupper_maze_env --timesteps 50000
 ```
 
 ## 🖼️ Gallery
