@@ -77,7 +77,11 @@ class MiniPupperMazeEnv(gym.Env):
         self.camera.set_pose(pos=pos + offset, lookat=pos + look)
 
     def _get_obs(self):
-        img = self.camera.get_rgba_tensor()[..., :3].cpu().numpy()
+        # Genesis' ``Camera`` API exposes the rendered image via ``render``
+        # instead of ``get_rgba_tensor``.  ``render`` returns an RGB image
+        # with float values in ``[0, 1]`` so we convert it to ``uint8`` and
+        # arrange the tensor in ``CHW`` format as expected by ``gym``.
+        img = self.camera.render(rgb=True)[0]
         img = (img * 255).astype(np.uint8)
         return np.transpose(img, (2, 0, 1))
 
