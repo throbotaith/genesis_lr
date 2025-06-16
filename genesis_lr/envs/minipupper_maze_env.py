@@ -45,12 +45,24 @@ class MiniPupperMazeEnv(gym.Env):
             GUI=False,
         )
 
+        # add ground plane
+        self.scene.add_entity(
+            gs.morphs.URDF(
+                file=str(repo_root / "resources" / "plane" / "plane.urdf"),
+                fixed=True,
+            )
+        )
+
         # build a simple maze with two walls
         h = 0.2
         w = 0.05
         l = 4.0
-        self.scene.add_entity(gs.morphs.Box(size=(l, w, h), pos=(1.0, 0.5, h/2), fixed=True))
-        self.scene.add_entity(gs.morphs.Box(size=(l, w, h), pos=(1.0, -0.5, h/2), fixed=True))
+        self.scene.add_entity(
+            gs.morphs.Box(size=(l, w, h), pos=(1.0, 0.5, h / 2), fixed=True)
+        )
+        self.scene.add_entity(
+            gs.morphs.Box(size=(l, w, h), pos=(1.0, -0.5, h / 2), fixed=True)
+        )
 
         self.scene.build(n_envs=1)
         self._update_camera()
