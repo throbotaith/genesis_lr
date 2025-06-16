@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import gym
 from gym import spaces
 import numpy as np
@@ -10,6 +12,8 @@ class MiniPupperMazeEnv(gym.Env):
     def __init__(self, headless=True):
         super().__init__()
         gs.init(backend=gs.gpu, logging_level='warning')
+
+        repo_root = Path(__file__).resolve().parents[2]
 
         self.scene = gs.Scene(
             sim_options=gs.options.SimOptions(dt=0.02, substeps=1),
@@ -24,8 +28,8 @@ class MiniPupperMazeEnv(gym.Env):
 
         # load robot (use go2 as placeholder for mini pupper)
         self.robot = self.scene.add_entity(
-            gs.morphs.URDF(file="{}/resources/robots/go2/urdf/go2.urdf".format(
-                gs.utils.get_repo_root()),
+            gs.morphs.URDF(
+                file=str(repo_root / "resources" / "robots" / "go2" / "urdf" / "go2.urdf"),
                 merge_fixed_links=True,
                 pos=(0.0, 0.0, 0.24),
             ),
