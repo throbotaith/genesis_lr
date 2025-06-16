@@ -1,46 +1,35 @@
-# 🦿 Legged Robotics in Genesis
+# 🦿 Genesisでの脚式ロボティクス
 
-A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for training legged robots in [genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main)
+[legged_gym](https://github.com/leggedrobotics/legged_gym) をベースとし、[Genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main) 上で脚式ロボットを学習させるためのフレームワークです。
 
-## Table of Contents
-
-- [🦿 Legged Robotics in Genesis](#-legged-robotics-in-genesis)
-  - [Table of Contents](#table-of-contents)
-  - [📅 Updates](#-updates)
-  - [🌟 Features](#-features)
-  - [🧪 Test Results](#-test-results)
-  - [🛠 Installation](#-installation)
-  - [👋 Usage](#-usage)
-    - [🚀 Quick Start](#-quick-start)
-    - [📖 Instructions](#-instructions)
-  - [🐳 Docker](#-docker)
-  - [🖼️ Gallery](#️-gallery)
-  - [🙏 Acknowledgements](#-acknowledgements)
+## 目次
+- [🦿 Genesisでの脚式ロボティクス](#-genesisでの脚式ロボティクス)
+  - [更新履歴](#更新履歴)
+  - [特徴](#特徴)
+  - [テスト結果](#テスト結果)
+  - [インストール](#インストール)
+  - [使い方](#使い方)
+    - [クイックスタート](#クイックスタート)
+    - [詳細な手順](#詳細な手順)
+  - [Docker](#docker)
+  - [ギャラリー](#ギャラリー)
+  - [謝辞](#謝辞)
   - [TODO](#todo)
 
 ---
-## 📅 Updates
+## 更新履歴
 
 <details>
 <summary>2025/03/22</summary>
 
-- I created a [new repo based on legged_gym](https://github.com/lupinjia/legged_gym_ext), containing custom implementation of some RL control papers.
+- [legged_gym](https://github.com/lupinjia/legged_gym_ext) をベースにした新しいリポジトリを作成しました。
 
 </details>
-
-<!-- <details>
-<summary>2025/02/23</summary>
-
-- find some bugs in genesis. The environments can return nan values without knowing why (https://github.com/Genesis-Embodied-AI/Genesis/issues/625), which can hinder long-time training where nan values may suddenly come out and terminates your training.
-
-  ![](./test_resources/nan_values_bug.png)
-
-</details> -->
 
 <details>
 <summary>2025/02/10</summary>
 
-- add measure_heights support, and provide a demo of exteroceptive locomotion ([go2_rough](https://github.com/lupinjia/genesis_lr/tree/main/legged_gym/envs/go2/go2_rough))
+- `measure_heights` をサポートし、外界情報を用いた歩行デモ ([go2_rough](https://github.com/lupinjia/genesis_lr/tree/main/legged_gym/envs/go2/go2_rough)) を追加しました。
 
 ![](./test_resources//go2_rough_demo.gif)
 
@@ -49,153 +38,153 @@ A [legged_gym](https://github.com/leggedrobotics/legged_gym) based framework for
 <details>
 <summary>2024/12/28</summary>
 
-- add [wiki page](https://github.com/lupinjia/genesis_lr/wiki) for instructions
+- 手順をまとめた [wiki](https://github.com/lupinjia/genesis_lr/wiki) を追加しました。
 
 </details>
 
 <details>
 <summary>2024/12/26</summary>
 
-- add terrain support, optional terrain type: ["plane", "heightfield"]. 
+- 地形機能を追加しました。選択できる地形タイプは `"plane"`, `"heightfield"` です。
 
   ![](./test_resources/terrain_demo.gif)
 
-- move test results to [tests.md](./test_resources/tests.md)
+- テスト結果を [tests.md](./test_resources/tests.md) に移動しました。
 
 </details>
 
 <details>
 <summary>2024/12/24</summary>
 
-- add a new demo environment `bipedal_walker`
+- 新しいデモ環境 `bipedal_walker` を追加しました。
 
 </details>
 
 <details>
 <summary>2024/12/23</summary>
 
-- divide main and deploy branches, deploy branch should be used with a custom rsl_rl(which will be open-source soon)
+- `main` ブランチと `deploy` ブランチを分割しました。`deploy` ブランチはカスタム版 `rsl_rl` と一緒に使用してください（近日公開予定）。
 
 </details>
 
 ---
 
+## 特徴
 
-## 🌟 Features
+- **[legged_gym](https://github.com/leggedrobotics/legged_gym) を完全に踏襲**
 
-- **Totally based on [legged_gym](https://github.com/leggedrobotics/legged_gym)**
-  
-  It's easy to use for those who are familiar with legged_gym and rsl_rl
+  `legged_gym` や `rsl_rl` に慣れている方であれば簡単に利用できます。
 
-- **Faster and Smaller**
-  
-  For a go2 walking on the plane task with 4096 envs, the training speed in Genesis is approximately **1.3x** compared to [Isaac Gym](https://developer.nvidia.com/isaac-gym), while the graphics memory usage is roughly **1/2** compared to IsaacGym.
+- **高速かつ省メモリ**
 
-  With this smaller memory usage, it's possible to **run more parallel environments**, which can further improve the training speed.
+  4096 環境で平面歩行タスクを学習させた場合、Genesis 上での学習速度は [Isaac Gym](https://developer.nvidia.com/isaac-gym) と比べ約 **1.3 倍**、グラフィックメモリ使用量はおよそ **1/2** です。
 
-## 🧪 Test Results
+  メモリ消費が少ないため、より多くの並列環境を動かすことができ、さらなる速度向上が期待できます。
 
-For tests conducted on Genesis, please refer to [tests.md](./test_resources/tests.md)
+## テスト結果
 
-## 🛠 Installation
+Genesis 上で行ったテスト結果は [tests.md](./test_resources/tests.md) を参照してください。
 
-1. Create a new python virtual env with python>=3.10
-2. Install [PyTorch](https://pytorch.org/)
-3. Install Genesis following the instructions in the [Genesis repo](https://github.com/Genesis-Embodied-AI/Genesis)
-4. Install rsl_rl and tensorboard
+## インストール
+
+1. Python>=3.10 の仮想環境を作成します。
+2. [PyTorch](https://pytorch.org/) をインストールします。
+3. [Genesis リポジトリ](https://github.com/Genesis-Embodied-AI/Genesis) の手順に従って Genesis をインストールします。
+4. `rsl_rl` と `tensorboard` をインストールします。
    ```bash
-   # Install rsl_rl.
    git clone git@github.com:leggedrobotics/rsl_rl.git
    cd rsl_rl && git checkout v1.0.2 && pip install -e . --use-pep517
 
-   # Install tensorboard.
    pip install tensorboard
    ```
-5. Install genesis_lr
+5. `genesis_lr` をインストールします。
    ```bash
    git clone git@github.com:lupinjia/genesis_lr.git
    cd genesis_lr
    pip install -e .
    ```
 
-## 👋 Usage
+## 使い方
 
-### 🚀 Quick Start
+### クイックスタート
 
-By default, the task is set to `go2`(in `utils/helpers.py`), we can run a training session with the following command:
+デフォルトのタスクは `utils/helpers.py` 内で `go2` に設定されています。以下のコマンドで学習を開始できます。
 
 ```bash
 cd legged_gym/scripts
-python train.py --headless # run training without rendering
+python train.py --headless
 ```
 
-After the training is done, paste the `run_name` under `logs/go2` to `load_run` in `go2_config.py`: 
+学習後、`logs/go2` 以下の `run_name` を `go2_config.py` の `load_run` に貼り付けます。
 
 ![](./test_resources/paste_load_run.png)
 
-Then, run `play.py` to visualize the trained model:
+その後 `play.py` を実行すると、学習済みモデルを可視化できます。
 
 ![](./test_resources/go2_flat_play.gif)
 
-### Mini Pupper Maze Example
+### Mini Pupper Maze 例
 
-To train the maze navigation policy with image observations:
+画像入力を用いた迷路ナビゲーションポリシーを学習するには次のようにします。
 
 ```bash
 python train.py --env minipupper_maze_env --headless --timesteps 50000
 ```
 
-This uses PPO with a CNN policy on the 64x64 RGB camera stream.  If you want to
-see the Genesis viewer, simply drop the `--headless` flag:
+Genesis ビューアを表示したい場合は `--headless` を外してください。
 
 ```bash
 python train.py --env minipupper_maze_env --timesteps 50000
 ```
 
-### 📖 Instructions
+### 詳細な手順
 
-For more detailed instructions, please refer to the [wiki page](https://github.com/lupinjia/genesis_lr/wiki)
+詳細は [wiki ページ](https://github.com/lupinjia/genesis_lr/wiki) を参照してください。
 
-## 🐳 Docker
+## Docker
 
-Build the Docker image with:
+このリポジトリを `/home/teru/ws` にクローンした状態で、次のコマンドでイメージをビルドします。
 
 ```bash
 docker build -t genesis-lr .
 ```
 
-Run a container and start a training session:
+GPU を使用してコンテナを起動し、学習を開始する例です。ホストの `/home/teru/ws` をコンテナ内の同じ場所にマウントし、作業ディレクトリとして使用します。
 
 ```bash
-docker run --gpus all -it genesis-lr bash
+docker run --gpus all -it \
+  -v /home/teru/ws:/home/teru/ws \
+  -w /home/teru/ws \
+  genesis-lr bash
 cd legged_gym/scripts
 python train.py --headless
 ```
 
-### Mini Pupper 2 RL with GUI
+### Mini Pupper 2 RL を GUI 付きで実行
 
-To view the Genesis viewer, allow the container to use your X11 display and run
-the training without the `--headless` flag:
+Genesis ビューアを表示する場合は X11 を許可し、`--headless` を付けずに実行します。
 
 ```bash
-# on the host
+# ホスト側で
 xhost +local:root
 docker run --gpus all -it \
   --env DISPLAY=$DISPLAY \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /home/teru/ws:/home/teru/ws \
+  -w /home/teru/ws \
   genesis-lr bash
 
-# inside the container
+# コンテナ内で
 python train.py --env minipupper_maze_env --timesteps 50000
 ```
 
-## 🖼️ Gallery
+## ギャラリー
 
 | Go2 | Bipedal Walker |
-|--- | --- |
+| --- | --- |
 | ![](./test_resources/go2_flat_play.gif) | ![](./test_resources/bipedal_walker_flat.gif) |
 
-## 🙏 Acknowledgements
+## 謝辞
 
 - [Genesis](https://github.com/Genesis-Embodied-AI/Genesis/tree/main)
 - [Genesis-backflip](https://github.com/ziyanx02/Genesis-backflip)
@@ -205,9 +194,9 @@ python train.py --env minipupper_maze_env --timesteps 50000
 
 ## TODO
 
-- [x] Add domain randomization
-- [x] Verify the trained model on real robots.
-- [x] Add Heightfield support
-- [x] Add meausre_heights support
-- [ ] Add go2 deploy demos and instructions (vanilla and explicit estimator)
-- [ ] Add teacher-student implementation
+- [x] ドメインランダム化の追加
+- [x] 実機での検証
+- [x] ハイトフィールド対応
+- [x] `measure_heights` サポート
+- [ ] go2 のデプロイデモと手順（通常版と外部推定器版）
+- [ ] 教師あり・学習デモの追加

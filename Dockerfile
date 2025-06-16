@@ -15,8 +15,8 @@ RUN git clone https://github.com/leggedrobotics/rsl_rl.git && \
     cd .. && rm -rf rsl_rl
 
 # Copy repo
-WORKDIR /workspace
-COPY . /workspace
+WORKDIR /home/teru/ws
+COPY . /home/teru/ws
 RUN pip install -e .
 
 CMD ["bash"]
